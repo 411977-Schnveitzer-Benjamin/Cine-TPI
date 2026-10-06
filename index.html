@@ -71,22 +71,7 @@
             </h2>
             <div class="carousel-container">
                 <div class="carousel-track" id="carouselTrack">
-                    <!-- Movie Posters -->
-                    <div class="carousel-slide">
-                        <img src="https://via.placeholder.com/300x450/1e293b/ffffff?text=Inception" alt="Inception" class="carousel-img">
-                    </div>
-                    <div class="carousel-slide">
-                        <img src="https://via.placeholder.com/300x450/1e293b/ffffff?text=The+Dark+Knight" alt="The Dark Knight" class="carousel-img">
-                    </div>
-                    <div class="carousel-slide">
-                        <img src="https://via.placeholder.com/300x450/1e293b/ffffff?text=Interstellar" alt="Interstellar" class="carousel-img">
-                    </div>
-                    <div class="carousel-slide">
-                        <img src="https://via.placeholder.com/300x450/1e293b/ffffff?text=Dune+Parte+Dos" alt="Dune Parte Dos" class="carousel-img">
-                    </div>
-                    <div class="carousel-slide">
-                        <img src="https://via.placeholder.com/300x450/1e293b/ffffff?text=Deadpool+y+Wolverine" alt="Deadpool y Wolverine" class="carousel-img">
-                    </div>
+                    <!-- JS inyectará aquí los posters -->
                 </div>
             </div>
         </div>
@@ -159,6 +144,75 @@
         </div>
     </div>
 
+    <script src="js/movies.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const track = document.getElementById('carouselTrack');
+            // Filtrar solo las de cartelera
+            const movies = getMovies().filter(m => m.status === 'Cartelera');
+            
+            if (track && movies.length > 0) {
+                track.innerHTML = movies.map((m, index) => `
+                    <div class="carousel-slide" data-index="${index}" onclick="window.location.href='reserva.html?id=${m.id}'">
+                        <img src="${m.image}" alt="${m.title}" class="carousel-img" title="${m.title}">
+                    </div>
+                `).join('');
+
+                const slides = document.querySelectorAll('.carousel-slide');
+                let currentIndex = 0;
+
+                function updateCarousel() {
+                    slides.forEach((slide, i) => {
+                        const offset = i - currentIndex;
+                        
+                        if (offset === 0) {
+                            slide.style.transform = 'translateX(0) scale(1) translateZ(0)';
+                            slide.style.opacity = '1';
+                            slide.style.zIndex = '5';
+                            slide.style.filter = 'none';
+                        } else if (offset === 1 || offset === -1) {
+                            const direction = offset > 0 ? 1 : -1;
+                            slide.style.transform = `translateX(${direction * 140}%) scale(0.8) translateZ(-100px)`;
+                            slide.style.opacity = '0.7';
+                            slide.style.zIndex = '4';
+                            slide.style.filter = 'blur(2px)';
+                        } else if (offset === 2 || offset === -2) {
+                            const direction = offset > 0 ? 1 : -1;
+                            slide.style.transform = `translateX(${direction * 220}%) scale(0.6) translateZ(-200px)`;
+                            slide.style.opacity = '0.4';
+                            slide.style.zIndex = '3';
+                            slide.style.filter = 'blur(4px)';
+                        } else {
+                            slide.style.transform = `translateX(${offset > 0 ? 300 : -300}%) scale(0.4) translateZ(-300px)`;
+                            slide.style.opacity = '0';
+                            slide.style.zIndex = '1';
+                        }
+                    });
+                }
+
+                const prevBtn = document.getElementById('prevSlide');
+                const nextBtn = document.getElementById('nextSlide');
+                
+                if(prevBtn) {
+                    prevBtn.addEventListener('click', () => {
+                        currentIndex = (currentIndex > 0) ? currentIndex - 1 : slides.length - 1;
+                        updateCarousel();
+                    });
+                }
+                
+                if(nextBtn) {
+                    nextBtn.addEventListener('click', () => {
+                        currentIndex = (currentIndex < slides.length - 1) ? currentIndex + 1 : 0;
+                        updateCarousel();
+                    });
+                }
+
+                updateCarousel();
+            } else if (track) {
+                track.innerHTML = '<p style="color: white; text-align: center; width: 100%;">No hay películas en cartelera actualmente.</p>';
+            }
+        });
+    </script>
     <script src="js/main.js"></script>
 </body>
 </html>

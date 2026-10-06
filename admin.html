@@ -154,7 +154,7 @@
                 <div class="card table-section">
                     <div class="section-header">
                         <h2>Gestión de Películas y Funciones</h2>
-                        <button class="btn btn-primary btn-sm" onclick="openModal('modalPelicula')">
+                        <button class="btn btn-primary btn-sm" onclick="resetPeliculaForm(); openModal('modalPelicula')">
                             <i data-feather="plus"></i> Nueva Película
                         </button>
                     </div>
@@ -170,33 +170,8 @@
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr>
-                                    <td><img src="https://via.placeholder.com/40x60/1e293b/ffffff?text=P1" alt="Poster" class="table-poster"></td>
-                                    <td><span class="font-bold">Inception</span></td>
-                                    <td>148 min</td>
-                                    <td><span class="badge badge-warning">+13</span></td>
-                                    <td><span class="badge badge-success">Cartelera</span></td>
-                                    <td>
-                                        <div class="action-buttons">
-                                            <button class="btn-action edit" title="Editar"><i data-feather="edit-2"></i></button>
-                                            <button class="btn-action delete" title="Borrar"><i data-feather="trash-2"></i></button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td><img src="https://via.placeholder.com/40x60/1e293b/ffffff?text=P2" alt="Poster" class="table-poster"></td>
-                                    <td><span class="font-bold">Dune: Parte Dos</span></td>
-                                    <td>166 min</td>
-                                    <td><span class="badge badge-warning">+13</span></td>
-                                    <td><span class="badge badge-warning">Próximamente</span></td>
-                                    <td>
-                                        <div class="action-buttons">
-                                            <button class="btn-action edit" title="Editar"><i data-feather="edit-2"></i></button>
-                                            <button class="btn-action delete" title="Borrar"><i data-feather="trash-2"></i></button>
-                                        </div>
-                                    </td>
-                                </tr>
+                            <tbody id="admin-peliculas-tbody">
+                                <!-- JS inyectará las filas aquí -->
                             </tbody>
                         </table>
                     </div>
@@ -209,7 +184,7 @@
                 <div class="card table-section" style="margin-bottom: 2rem;">
                     <div class="section-header">
                         <h2>Gestión de Salas</h2>
-                        <button class="btn btn-primary btn-sm" onclick="openModal('modalSala')">
+                        <button class="btn btn-primary btn-sm" onclick="resetSalaForm(); openModal('modalSala')">
                             <i data-feather="plus"></i> Nueva Sala
                         </button>
                     </div>
@@ -223,29 +198,8 @@
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr>
-                                    <td><span class="font-bold">Sala 1</span></td>
-                                    <td><span class="badge badge-success">2D Regular</span></td>
-                                    <td>150 butacas</td>
-                                    <td>
-                                        <div class="action-buttons">
-                                            <button class="btn-action edit" title="Editar"><i data-feather="edit-2"></i></button>
-                                            <button class="btn-action delete" title="Borrar"><i data-feather="trash-2"></i></button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td><span class="font-bold">Sala 2</span></td>
-                                    <td><span class="badge badge-warning">3D</span></td>
-                                    <td>150 butacas</td>
-                                    <td>
-                                        <div class="action-buttons">
-                                            <button class="btn-action edit" title="Editar"><i data-feather="edit-2"></i></button>
-                                            <button class="btn-action delete" title="Borrar"><i data-feather="trash-2"></i></button>
-                                        </div>
-                                    </td>
-                                </tr>
+                            <tbody id="admin-salas-tbody">
+                                <!-- JS inyectará las filas aquí -->
                             </tbody>
                         </table>
                     </div>
@@ -285,7 +239,7 @@
                 <div class="card table-section">
                     <div class="section-header">
                         <h2>Gestión de Confitería</h2>
-                        <button class="btn btn-primary btn-sm" onclick="openModal('modalConfiteria')">
+                        <button class="btn btn-primary btn-sm" onclick="resetConfiteriaForm(); openModal('modalConfiteria')">
                             <i data-feather="plus"></i> Nuevo Producto
                         </button>
                     </div>
@@ -301,33 +255,8 @@
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr>
-                                    <td><img src="https://via.placeholder.com/40x40/1e293b/ffffff?text=P" alt="Pochoclos" class="table-poster" style="border-radius: 50%;"></td>
-                                    <td><span class="font-bold">Combo Pochoclos Grande</span></td>
-                                    <td>Snacks</td>
-                                    <td>$ 6.500</td>
-                                    <td><span class="badge badge-success">Disponible</span></td>
-                                    <td>
-                                        <div class="action-buttons">
-                                            <button class="btn-action edit" title="Editar"><i data-feather="edit-2"></i></button>
-                                            <button class="btn-action delete" title="Borrar"><i data-feather="trash-2"></i></button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td><img src="https://via.placeholder.com/40x40/1e293b/ffffff?text=C" alt="Coca" class="table-poster" style="border-radius: 50%;"></td>
-                                    <td><span class="font-bold">Coca-Cola 1L</span></td>
-                                    <td>Bebidas</td>
-                                    <td>$ 2.800</td>
-                                    <td><span class="badge badge-success">Disponible</span></td>
-                                    <td>
-                                        <div class="action-buttons">
-                                            <button class="btn-action edit" title="Editar"><i data-feather="edit-2"></i></button>
-                                            <button class="btn-action delete" title="Borrar"><i data-feather="trash-2"></i></button>
-                                        </div>
-                                    </td>
-                                </tr>
+                            <tbody id="admin-confiteria-tbody">
+                                <!-- JS inyectará las filas aquí -->
                             </tbody>
                         </table>
                     </div>
@@ -339,7 +268,7 @@
                 <div class="card table-section">
                     <div class="section-header">
                         <h2>Gestión de Usuarios y Socios</h2>
-                        <button class="btn btn-primary btn-sm" onclick="openModal('modalUsuario')">
+                        <button class="btn btn-primary btn-sm" onclick="resetUsuarioForm(); openModal('modalUsuario')">
                             <i data-feather="user-plus"></i> Nuevo Usuario
                         </button>
                     </div>
@@ -354,43 +283,8 @@
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr>
-                                    <td><span class="font-bold">Adminstrador</span></td>
-                                    <td>admin@cineshollywood.com</td>
-                                    <td><span class="badge badge-success">Admin</span></td>
-                                    <td>Administrador</td>
-                                    <td>
-                                        <div class="action-buttons">
-                                            <button class="btn-action edit" title="Editar"><i data-feather="edit-2"></i></button>
-                                            <button class="btn-action delete" title="Borrar" disabled style="opacity: 0.5;"><i data-feather="trash-2"></i></button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td><span class="font-bold">Juan Pérez</span></td>
-                                    <td>juanperez@ejemplo.com</td>
-                                    <td><span class="badge badge-warning">Socio VIP</span></td>
-                                    <td>Usuario</td>
-                                    <td>
-                                        <div class="action-buttons">
-                                            <button class="btn-action edit" title="Editar"><i data-feather="edit-2"></i></button>
-                                            <button class="btn-action delete" title="Borrar"><i data-feather="trash-2"></i></button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td><span class="font-bold">Maria Gómez</span></td>
-                                    <td>mariag@ejemplo.com</td>
-                                    <td><span class="badge" style="background: rgba(148, 163, 184, 0.2); color: var(--clr-text);">Normal</span></td>
-                                    <td>Usuario</td>
-                                    <td>
-                                        <div class="action-buttons">
-                                            <button class="btn-action edit" title="Editar"><i data-feather="edit-2"></i></button>
-                                            <button class="btn-action delete" title="Borrar"><i data-feather="trash-2"></i></button>
-                                        </div>
-                                    </td>
-                                </tr>
+                            <tbody id="admin-usuarios-tbody">
+                                <!-- JS inyectará las filas aquí -->
                             </tbody>
                         </table>
                     </div>
@@ -410,25 +304,29 @@
                 <button class="close-modal" onclick="closeModal('modalPelicula')">&times;</button>
             </div>
             <form>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
                     <div class="form-group">
-                        <label class="form-label">Título de la película</label>
-                        <input type="text" class="form-control" placeholder="Ej: Inception" required>
+                        <label class="form-label">Título</label>
+                        <input type="text" id="peliculaTitulo" class="form-control" placeholder="Ej: Inception" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Duración (min)</label>
+                        <input type="number" id="peliculaDuracion" class="form-control" placeholder="Ej: 148" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Clasificación</label>
-                        <select class="form-control">
-                            <option>ATP</option>
-                            <option>+13</option>
-                            <option>+16</option>
-                            <option>+18</option>
+                        <select id="peliculaClasificacion" class="form-control">
+                            <option value="ATP">ATP</option>
+                            <option value="+13">+13</option>
+                            <option value="+16">+16</option>
+                            <option value="+18">+18</option>
                         </select>
                     </div>
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label">Imagen de Portada (Proporción 3:4 o 4:3)</label>
-                    <input type="file" class="form-control" accept="image/*" required>
+                    <label class="form-label">Imagen de Portada (Opcional si vas a editar)</label>
+                    <input type="file" id="peliculaImagen" class="form-control" accept="image/*">
                 </div>
                 
                 <div class="form-group">
@@ -464,7 +362,7 @@
                     </div>
                 </div>
                 
-                <button type="button" class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="closeModal('modalPelicula')">Guardar Película</button>
+                <button type="button" class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="savePelicula()">Guardar Película</button>
             </form>
         </div>
     </div>
@@ -479,24 +377,24 @@
             <form>
                 <div class="form-group">
                     <label class="form-label">Nombre o Número de la sala</label>
-                    <input type="text" class="form-control" placeholder="Ej: Sala 4" required>
+                    <input type="text" id="salaNombre" class="form-control" placeholder="Ej: Sala 4" required>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                     <div class="form-group">
                         <label class="form-label">Tipo de Sala</label>
-                        <select class="form-control">
-                            <option>2D Regular</option>
-                            <option>3D</option>
-                            <option>4D</option>
-                            <option>Premium / VIP</option>
+                        <select id="salaTipo" class="form-control">
+                            <option value="2D Regular">2D Regular</option>
+                            <option value="3D">3D</option>
+                            <option value="4D">4D</option>
+                            <option value="Premium / VIP">Premium / VIP</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Capacidad (Butacas)</label>
-                        <input type="number" class="form-control" placeholder="Ej: 150" value="150" required>
+                        <input type="number" id="salaCapacidad" class="form-control" placeholder="Ej: 150" value="150" required>
                     </div>
                 </div>
-                <button type="button" class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="closeModal('modalSala')">Guardar Sala</button>
+                <button type="button" class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="saveSala()">Guardar Sala</button>
             </form>
         </div>
     </div>
@@ -511,21 +409,35 @@
             <form>
                 <div class="form-group">
                     <label class="form-label">Nombre del producto</label>
-                    <input type="text" class="form-control" placeholder="Ej: Pochoclos Grandes" required>
+                    <input type="text" id="confiteriaNombre" class="form-control" placeholder="Ej: Pochoclos Grandes" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Categoría</label>
-                    <select class="form-control">
-                        <option>Snacks</option>
-                        <option>Bebidas</option>
-                        <option>Combos</option>
+                    <select id="confiteriaCategoria" class="form-control">
+                        <option value="Snacks">Snacks</option>
+                        <option value="Bebidas">Bebidas</option>
+                        <option value="Combos">Combos</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Precio ($)</label>
-                    <input type="number" class="form-control" placeholder="Ej: 6500" required>
+                    <label class="form-label">Descripción</label>
+                    <input type="text" id="confiteriaDescripcion" class="form-control" placeholder="Ej: Balde de pochoclos..." required>
                 </div>
-                <button type="button" class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="closeModal('modalConfiteria')">Guardar Producto</button>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label">Precio ($)</label>
+                        <input type="number" id="confiteriaPrecio" class="form-control" placeholder="Ej: 6500" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Stock</label>
+                        <input type="number" id="confiteriaStock" class="form-control" placeholder="Ej: 50" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Imagen de Producto (Opcional si vas a editar)</label>
+                    <input type="file" id="confiteriaImagen" class="form-control" accept="image/*">
+                </div>
+                <button type="button" class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="saveConfiteriaItem()">Guardar Producto</button>
             </form>
         </div>
     </div>
@@ -540,21 +452,27 @@
             <form>
                 <div class="form-group">
                     <label class="form-label">Nombre Completo</label>
-                    <input type="text" class="form-control" placeholder="Ej: Lucas Martínez" required>
+                    <input type="text" id="usuarioNombre" class="form-control" placeholder="Ej: Lucas Martínez" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Correo Electrónico</label>
-                    <input type="email" class="form-control" placeholder="ejemplo@correo.com" required>
+                    <input type="email" id="usuarioEmail" class="form-control" placeholder="ejemplo@correo.com" required>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Tipo de Cuenta</label>
-                    <select class="form-control">
-                        <option>Normal</option>
-                        <option>Socio VIP</option>
-                        <option>Administrador</option>
-                    </select>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label">Contraseña</label>
+                        <input type="password" id="usuarioPassword" class="form-control" placeholder="Dejar en blanco para no cambiar">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Tipo de Cuenta</label>
+                        <select id="usuarioTipo" class="form-control">
+                            <option value="Normal">Normal</option>
+                            <option value="Socio VIP">Socio VIP</option>
+                            <option value="Admin">Administrador</option>
+                        </select>
+                    </div>
                 </div>
-                <button type="button" class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="closeModal('modalUsuario')">Guardar Usuario</button>
+                <button type="button" class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="saveUsuario()">Guardar Usuario</button>
             </form>
         </div>
     </div>
@@ -634,27 +552,481 @@
             }
         }
 
-        // Lógica de botones de acción en tablas (Editar / Borrar)
+        // Lógica de botones de acción en tablas (Editar / Borrar) - General
         document.addEventListener('click', function(e) {
-            // Borrar
+            // Borrar general para las otras tablas
             const btnDelete = e.target.closest('.btn-action.delete');
             if (btnDelete) {
-                if(confirm('¿Estás seguro de que deseás eliminar este registro?')) {
-                    const row = btnDelete.closest('tr');
-                    if(row) row.remove();
+                const section = btnDelete.closest('.admin-section');
+                if (section.id !== 'section-peliculas' && section.id !== 'section-usuarios') {
+                    if(confirm('¿Estás seguro de que deseás eliminar este registro?')) {
+                        const row = btnDelete.closest('tr');
+                        if(row) row.remove();
+                    }
                 }
             }
 
-            // Editar
+            // Editar general
             const btnEdit = e.target.closest('.btn-action.edit');
             if (btnEdit) {
                 const section = btnEdit.closest('.admin-section');
-                if (section.id === 'section-peliculas') openModal('modalPelicula');
-                else if (section.id === 'section-salas') openModal('modalSala');
-                else if (section.id === 'section-confiteria') openModal('modalConfiteria');
-                else if (section.id === 'section-usuarios') openModal('modalUsuario');
+                if (section.id !== 'section-peliculas' && section.id !== 'section-usuarios') {
+                    if (section.id === 'section-salas') openModal('modalSala');
+                    else if (section.id === 'section-confiteria') openModal('modalConfiteria');
+                }
             }
         });
+    </script>
+    <script src="js/movies.js"></script>
+    <script src="js/users.js"></script>
+    <script src="js/salas.js"></script>
+    <script src="js/confiteria.js"></script>
+    <script>
+        let editingPeliculaId = null;
+        let editingUsuarioId = null;
+        let editingSalaId = null;
+        let editingConfiteriaId = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderAdminMovies();
+            renderAdminUsuarios();
+            renderAdminSalas();
+            renderAdminConfiteria();
+        });
+
+        // ============================
+        // LOGICA DE SALAS
+        // ============================
+        function renderAdminSalas() {
+            const tbody = document.getElementById('admin-salas-tbody');
+            if(!tbody) return;
+            const salas = getSalas();
+            
+            tbody.innerHTML = salas.map(s => {
+                let badgeClass = s.tipo.includes('3D') || s.tipo.includes('4D') ? 'badge-warning' : (s.tipo.includes('Premium') ? 'badge-danger' : 'badge-success');
+                return `
+                <tr>
+                    <td><span class="font-bold">${s.nombre}</span></td>
+                    <td><span class="badge ${badgeClass}">${s.tipo}</span></td>
+                    <td>${s.capacidad} butacas</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-action edit" title="Editar" onclick="editSala(${s.id})"><i data-feather="edit-2"></i></button>
+                            <button class="btn-action delete" title="Borrar" onclick="deleteSala(${s.id})"><i data-feather="trash-2"></i></button>
+                        </div>
+                    </td>
+                </tr>
+                `;
+            }).join('');
+            if(window.feather) feather.replace();
+        }
+
+        function resetSalaForm() {
+            editingSalaId = null;
+            document.getElementById('salaNombre').value = '';
+            document.getElementById('salaTipo').value = '2D Regular';
+            document.getElementById('salaCapacidad').value = '150';
+            document.querySelector('#modalSala .modal-title').innerText = 'Añadir Sala';
+        }
+
+        function editSala(id) {
+            const salas = getSalas();
+            const s = salas.find(x => x.id === id);
+            if(s) {
+                editingSalaId = id;
+                document.getElementById('salaNombre').value = s.nombre;
+                document.getElementById('salaTipo').value = s.tipo;
+                document.getElementById('salaCapacidad').value = s.capacidad;
+                document.querySelector('#modalSala .modal-title').innerText = 'Editar Sala';
+                openModal('modalSala');
+            }
+        }
+
+        function saveSala() {
+            const nombre = document.getElementById('salaNombre').value;
+            const tipo = document.getElementById('salaTipo').value;
+            const capacidad = parseInt(document.getElementById('salaCapacidad').value);
+            
+            if(!nombre || !capacidad) return alert('Completa todos los campos');
+
+            let salas = getSalas();
+            if(editingSalaId) {
+                salas = salas.map(s => s.id === editingSalaId ? { ...s, nombre, tipo, capacidad } : s);
+            } else {
+                const newId = salas.length > 0 ? Math.max(...salas.map(x => x.id)) + 1 : 1;
+                salas.push({ id: newId, nombre, tipo, capacidad });
+            }
+            saveSalas(salas);
+            renderAdminSalas();
+            closeModal('modalSala');
+            resetSalaForm();
+        }
+
+        function deleteSala(id) {
+            if(confirm('¿Eliminar sala?')) {
+                let salas = getSalas();
+                salas = salas.filter(x => x.id !== id);
+                saveSalas(salas);
+                renderAdminSalas();
+            }
+        }
+
+        // ============================
+        // LOGICA DE CONFITERIA
+        // ============================
+        function renderAdminConfiteria() {
+            const tbody = document.getElementById('admin-confiteria-tbody');
+            if(!tbody) return;
+            const prods = getConfiteria();
+            
+            tbody.innerHTML = prods.map(p => {
+                let badgeClass = p.stock > 10 ? 'badge-success' : 'badge-warning';
+                let estado = p.stock > 10 ? 'Disponible' : (p.stock > 0 ? 'Poco Stock' : 'Sin Stock');
+                return `
+                <tr>
+                    <td><img src="${p.image}" alt="Producto" class="table-poster" style="border-radius: 50%;"></td>
+                    <td><span class="font-bold">${p.nombre}</span><br><small style="color:var(--clr-text-muted)">${p.categoria || 'Snacks'} - ${p.descripcion}</small></td>
+                    <td>$ ${p.precio}</td>
+                    <td>${p.stock} un.</td>
+                    <td><span class="badge ${badgeClass}">${estado}</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-action edit" title="Editar" onclick="editConfiteria(${p.id})"><i data-feather="edit-2"></i></button>
+                            <button class="btn-action delete" title="Borrar" onclick="deleteConfiteria(${p.id})"><i data-feather="trash-2"></i></button>
+                        </div>
+                    </td>
+                </tr>
+                `;
+            }).join('');
+            if(window.feather) feather.replace();
+        }
+
+        function resetConfiteriaForm() {
+            editingConfiteriaId = null;
+            document.getElementById('confiteriaNombre').value = '';
+            document.getElementById('confiteriaDescripcion').value = '';
+            document.getElementById('confiteriaCategoria').value = 'Snacks';
+            document.getElementById('confiteriaPrecio').value = '';
+            document.getElementById('confiteriaStock').value = '';
+            document.getElementById('confiteriaImagen').value = '';
+            document.querySelector('#modalConfiteria .modal-title').innerText = 'Añadir Producto';
+        }
+
+        function editConfiteria(id) {
+            const prods = getConfiteria();
+            const p = prods.find(x => x.id === id);
+            if(p) {
+                editingConfiteriaId = id;
+                document.getElementById('confiteriaNombre').value = p.nombre;
+                document.getElementById('confiteriaDescripcion').value = p.descripcion || '';
+                document.getElementById('confiteriaCategoria').value = p.categoria || 'Snacks';
+                document.getElementById('confiteriaPrecio').value = p.precio;
+                document.getElementById('confiteriaStock').value = p.stock;
+                document.getElementById('confiteriaImagen').value = '';
+                document.querySelector('#modalConfiteria .modal-title').innerText = 'Editar Producto';
+                openModal('modalConfiteria');
+            }
+        }
+
+        function saveConfiteriaItem() {
+            const nombre = document.getElementById('confiteriaNombre').value;
+            const descripcion = document.getElementById('confiteriaDescripcion').value;
+            const categoria = document.getElementById('confiteriaCategoria').value;
+            const precio = parseInt(document.getElementById('confiteriaPrecio').value);
+            const stock = parseInt(document.getElementById('confiteriaStock').value);
+            const fileInput = document.getElementById('confiteriaImagen');
+            
+            if(!nombre || !precio) return alert('Completa todos los campos obligatorios');
+
+            let prods = getConfiteria();
+            let finalImage = 'https://via.placeholder.com/300x200/1e293b/ffffff?text=' + encodeURIComponent(nombre);
+
+            if (editingConfiteriaId) {
+                const existing = prods.find(x => x.id === editingConfiteriaId);
+                if (existing) finalImage = existing.image;
+            }
+
+            function doSave() {
+                if(editingConfiteriaId) {
+                    prods = prods.map(p => p.id === editingConfiteriaId ? { ...p, nombre, descripcion, categoria, precio, stock, image: finalImage } : p);
+                } else {
+                    const newId = prods.length > 0 ? Math.max(...prods.map(x => x.id)) + 1 : 1;
+                    prods.push({ id: newId, nombre, descripcion, categoria, precio, stock, image: finalImage });
+                }
+                saveConfiteria(prods);
+                renderAdminConfiteria();
+                closeModal('modalConfiteria');
+                resetConfiteriaForm();
+            }
+
+            if (fileInput && fileInput.files && fileInput.files[0]) {
+                const file = fileInput.files[0];
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    finalImage = e.target.result;
+                    doSave();
+                };
+                reader.readAsDataURL(file);
+            } else {
+                doSave();
+            }
+        }
+
+        function deleteConfiteria(id) {
+            if(confirm('¿Eliminar producto?')) {
+                let prods = getConfiteria();
+                prods = prods.filter(x => x.id !== id);
+                saveConfiteria(prods);
+                renderAdminConfiteria();
+            }
+        }
+
+        // ============================
+        // LOGICA DE USUARIOS
+        // ============================
+
+        function renderAdminUsuarios() {
+            const tbody = document.getElementById('admin-usuarios-tbody');
+            if(!tbody) return;
+            const users = getUsers();
+            
+            tbody.innerHTML = users.map(u => {
+                let badgeClass = 'badge-success';
+                if (u.tipo === 'Normal') badgeClass = '';
+                if (u.tipo === 'Socio VIP') badgeClass = 'badge-warning';
+                
+                let isNormal = u.tipo === 'Normal';
+
+                return `
+                <tr>
+                    <td><span class="font-bold">${u.nombre}</span></td>
+                    <td>${u.email}</td>
+                    <td><span class="badge ${badgeClass}" ${isNormal ? 'style="background: rgba(148, 163, 184, 0.2); color: var(--clr-text);"' : ''}>${u.tipo}</span></td>
+                    <td>${u.rol}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-action edit" title="Editar" onclick="editUsuario(${u.id})"><i data-feather="edit-2"></i></button>
+                            <button class="btn-action delete" title="Borrar" onclick="deleteUsuario(${u.id})" ${u.id === 1 ? 'disabled style="opacity: 0.5;"' : ''}><i data-feather="trash-2"></i></button>
+                        </div>
+                    </td>
+                </tr>
+                `;
+            }).join('');
+            if(window.feather) feather.replace();
+        }
+
+        function resetUsuarioForm() {
+            editingUsuarioId = null;
+            document.getElementById('usuarioNombre').value = '';
+            document.getElementById('usuarioEmail').value = '';
+            document.getElementById('usuarioTipo').value = 'Normal';
+            document.getElementById('usuarioPassword').value = '';
+            document.querySelector('#modalUsuario .modal-title').innerText = 'Añadir Usuario';
+        }
+
+        function editUsuario(id) {
+            const users = getUsers();
+            const user = users.find(u => u.id === id);
+            if(user) {
+                editingUsuarioId = id;
+                document.getElementById('usuarioNombre').value = user.nombre;
+                document.getElementById('usuarioEmail').value = user.email;
+                document.getElementById('usuarioTipo').value = user.tipo;
+                document.getElementById('usuarioPassword').value = ''; // No cargar el password por seguridad
+                document.querySelector('#modalUsuario .modal-title').innerText = 'Editar Usuario';
+                openModal('modalUsuario');
+            }
+        }
+
+        function saveUsuario() {
+            const nombre = document.getElementById('usuarioNombre').value;
+            const email = document.getElementById('usuarioEmail').value;
+            const tipo = document.getElementById('usuarioTipo').value;
+            const password = document.getElementById('usuarioPassword').value;
+            
+            if(!nombre || !email) {
+                alert('Por favor completa el nombre y el correo.');
+                return;
+            }
+
+            let users = getUsers();
+            let rol = tipo === 'Admin' ? 'Administrador' : 'Usuario';
+
+            if (editingUsuarioId) {
+                users = users.map(u => {
+                    if(u.id === editingUsuarioId) {
+                        return { ...u, nombre, email, tipo, rol };
+                    }
+                    return u;
+                });
+            } else {
+                const newId = users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1;
+                if(!password) {
+                    alert('Por favor ingresa una contraseña para el nuevo usuario.');
+                    return;
+                }
+                users.push({
+                    id: newId,
+                    nombre,
+                    email,
+                    tipo,
+                    rol
+                });
+            }
+
+            saveUsers(users);
+            renderAdminUsuarios();
+            closeModal('modalUsuario');
+            resetUsuarioForm();
+        }
+
+        function deleteUsuario(id) {
+            if (id === 1) {
+                alert('No puedes eliminar al Administrador principal.');
+                return;
+            }
+            if(confirm('¿Estás seguro de que deseás eliminar a este usuario?')) {
+                let users = getUsers();
+                users = users.filter(u => u.id !== id);
+                saveUsers(users);
+                renderAdminUsuarios();
+            }
+        }
+
+        // ============================
+        // LOGICA DE PELICULAS
+        // ============================
+
+        // Funciones exclusivas para Cartelera (movies.js)
+        document.addEventListener('DOMContentLoaded', () => {
+            renderAdminMovies();
+        });
+
+        function renderAdminMovies() {
+            const tbody = document.getElementById('admin-peliculas-tbody');
+            if(!tbody) return;
+            const movies = getMovies();
+            
+            tbody.innerHTML = movies.map(m => {
+                let badgeClass = 'badge-success';
+                if (m.classification === '+13') badgeClass = 'badge-warning';
+                if (m.classification === '+16' || m.classification === '+18') badgeClass = 'badge-danger';
+                
+                let estadoClass = m.status === 'Cartelera' ? 'badge-success' : 'badge-warning';
+
+                return `
+                <tr>
+                    <td><img src="${m.image}" alt="Poster" class="table-poster"></td>
+                    <td><span class="font-bold">${m.title}</span></td>
+                    <td>${m.duration}</td>
+                    <td><span class="badge ${badgeClass}">${m.classification}</span></td>
+                    <td><span class="badge ${estadoClass}">${m.status}</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-action edit" title="Editar" onclick="editPelicula(${m.id})"><i data-feather="edit-2"></i></button>
+                            <button class="btn-action delete" title="Borrar" onclick="deletePelicula(${m.id})"><i data-feather="trash-2"></i></button>
+                        </div>
+                    </td>
+                </tr>
+                `;
+            }).join('');
+            feather.replace(); // Actualizar íconos
+        }
+
+        function resetPeliculaForm() {
+            editingPeliculaId = null;
+            document.getElementById('peliculaTitulo').value = '';
+            document.getElementById('peliculaDuracion').value = '';
+            document.getElementById('peliculaClasificacion').value = 'ATP';
+            document.getElementById('selectEstadoPelicula').value = 'Cartelera';
+            document.getElementById('peliculaImagen').value = '';
+            document.querySelector('#modalPelicula .modal-title').innerText = 'Añadir Película';
+        }
+
+        function editPelicula(id) {
+            const movies = getMovies();
+            const movie = movies.find(m => m.id === id);
+            if(movie) {
+                editingPeliculaId = id;
+                document.getElementById('peliculaTitulo').value = movie.title;
+                document.getElementById('peliculaDuracion').value = parseInt(movie.duration) || 0;
+                document.getElementById('peliculaClasificacion').value = movie.classification;
+                document.getElementById('selectEstadoPelicula').value = movie.status === 'Cartelera' ? 'Cartelera' : 'Proximos';
+                document.querySelector('#modalPelicula .modal-title').innerText = 'Editar Película';
+                openModal('modalPelicula');
+            }
+        }
+
+        function savePelicula() {
+            const titulo = document.getElementById('peliculaTitulo').value;
+            const duracion = document.getElementById('peliculaDuracion').value;
+            const clasificacion = document.getElementById('peliculaClasificacion').value;
+            const estado = document.getElementById('selectEstadoPelicula').value === 'Cartelera' ? 'Cartelera' : 'Próximamente';
+            const fileInput = document.getElementById('peliculaImagen');
+            
+            if(!titulo || !duracion) {
+                alert('Por favor completa el título y la duración.');
+                return;
+            }
+
+            let movies = getMovies();
+            let finalImage = 'https://via.placeholder.com/300x450/1e293b/ffffff?text=' + encodeURIComponent(titulo);
+
+            if (editingPeliculaId) {
+                const existing = movies.find(m => m.id === editingPeliculaId);
+                if (existing) finalImage = existing.image; // Mantiene la vieja si no hay nueva
+            }
+
+            function doSave() {
+                if (editingPeliculaId) {
+                    // Actualizar existente
+                    movies = movies.map(m => {
+                        if(m.id === editingPeliculaId) {
+                            return { ...m, title: titulo, duration: duracion + ' min', classification: clasificacion, status: estado, image: finalImage };
+                        }
+                        return m;
+                    });
+                } else {
+                    // Crear nueva
+                    const newId = movies.length > 0 ? Math.max(...movies.map(m => m.id)) + 1 : 1;
+                    movies.push({
+                        id: newId,
+                        title: titulo,
+                        duration: duracion + ' min',
+                        classification: clasificacion,
+                        status: estado,
+                        image: finalImage
+                    });
+                }
+
+                saveMovies(movies);
+                renderAdminMovies();
+                closeModal('modalPelicula');
+                resetPeliculaForm();
+            }
+
+            // Si subió un archivo, lo procesamos
+            if (fileInput && fileInput.files && fileInput.files[0]) {
+                const file = fileInput.files[0];
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    finalImage = e.target.result; // Imagen en formato Base64
+                    doSave();
+                };
+                reader.readAsDataURL(file);
+            } else {
+                doSave();
+            }
+        }
+
+        function deletePelicula(id) {
+            if(confirm('¿Estás seguro de que deseás eliminar esta película de toda la página?')) {
+                let movies = getMovies();
+                movies = movies.filter(m => m.id !== id);
+                saveMovies(movies);
+                renderAdminMovies();
+            }
+        }
     </script>
 </body>
 </html>

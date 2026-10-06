@@ -75,19 +75,13 @@
 /* Logo Styles */
 .site-logo {
     height: 50px;
+    width: auto;
+    object-fit: contain;
     transition: filter 0.3s ease;
 }
 
 .site-logo.admin {
     height: 40px;
-}
-
-/* Glow/Contour for Dark Theme to make dark logo visible */
-[data-theme="dark"] .site-logo {
-    filter: drop-shadow(1px 1px 0px rgba(255,255,255,0.8))
-            drop-shadow(-1px -1px 0px rgba(255,255,255,0.8))
-            drop-shadow(1px -1px 0px rgba(255,255,255,0.8))
-            drop-shadow(-1px 1px 0px rgba(255,255,255,0.8));
 }
 
 /* Base Styles */
@@ -375,6 +369,13 @@ a {
     .hero-actions {
         flex-direction: column;
     }
+}
+
+.table-poster {
+    width: 40px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 4px;
 }
 
 /* Modals */

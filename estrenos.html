@@ -18,6 +18,7 @@
                 <a href="cartelera.html" class="nav-link">Cartelera</a>
                 <a href="estrenos.html" class="nav-link" style="color: var(--clr-text);">Próximos Estrenos</a>
                 <a href="promociones.html" class="nav-link">Promociones</a>
+                <a href="admin.html" class="nav-link" id="navAdminPanel" style="display: none; color: var(--clr-primary); font-weight: bold;">Panel De Administrador</a>
             </nav>
             <div class="auth-buttons">
                 <a href="index.html" class="btn btn-outline">Volver al inicio</a>
@@ -30,33 +31,24 @@
         <h1 class="hero-title" style="font-size: 3.5rem; margin-bottom: 0.5rem;">Próximos Estrenos</h1>
         <p class="hero-subtitle">Mantenete al tanto de lo que se viene en la pantalla grande.</p>
         
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 2rem; margin-top: 3rem;">
-            
-            <div class="movie-card" style="background: var(--clr-surface); border: 1px solid var(--clr-border); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; position: relative;">
-                <div style="position: absolute; top: 10px; right: 10px; background: var(--clr-primary); color: white; padding: 0.3rem 0.8rem; border-radius: 20px; font-weight: bold; font-size: 0.8rem; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">Muy Pronto</div>
-                <img src="https://via.placeholder.com/300x450/1e293b/ffffff?text=Dune+Parte+Dos" alt="Dune Parte Dos" style="width: 100%; height: 350px; object-fit: cover;">
-                <div style="padding: 1.5rem;">
-                    <h3 style="margin-bottom: 0.5rem; font-size: 1.25rem;">Dune: Parte Dos</h3>
-                    <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
-                        <span class="badge badge-warning">+13</span>
-                        <span style="font-size: 0.9rem; color: var(--clr-text-muted);">166 min</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="movie-card" style="background: var(--clr-surface); border: 1px solid var(--clr-border); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; position: relative;">
-                <div style="position: absolute; top: 10px; right: 10px; background: var(--clr-primary); color: white; padding: 0.3rem 0.8rem; border-radius: 20px; font-weight: bold; font-size: 0.8rem; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">Muy Pronto</div>
-                <img src="https://via.placeholder.com/300x450/1e293b/ffffff?text=Deadpool+y+Wolverine" alt="Deadpool" style="width: 100%; height: 350px; object-fit: cover;">
-                <div style="padding: 1.5rem;">
-                    <h3 style="margin-bottom: 0.5rem; font-size: 1.25rem;">Deadpool & Wolverine</h3>
-                    <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
-                        <span class="badge badge-danger">+16</span>
-                        <span style="font-size: 0.9rem; color: var(--clr-text-muted);">128 min</span>
-                    </div>
-                </div>
-            </div>
-
+        <div id="estrenos-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 2rem; margin-top: 3rem;">
+            <!-- JS inyectará aquí los próximos estrenos -->
         </div>
     </div>
+    
+    <script src="js/movies.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('estrenos-container');
+            const movies = getMovies().filter(m => m.status === 'Próximamente');
+            
+            if(movies.length === 0) {
+                container.innerHTML = '<p style="color: var(--clr-text-muted); text-align: center; grid-column: 1 / -1;">No hay próximos estrenos por el momento.</p>';
+            } else {
+                container.innerHTML = movies.map(m => createMovieCardHTML(m, true)).join('');
+            }
+        });
+    </script>
+    <script src="js/main.js"></script>
 </body>
 </html>
