@@ -1,14 +1,14 @@
 /* Custom Properties (Tokens) */
 :root {
     /* Colors */
-    --clr-bg: #09090b; /* Very dark grayish black */
-    --clr-bg-glass: rgba(9, 9, 11, 0.7);
-    --clr-surface: #18181b;
-    --clr-primary: #e11d48; /* Vibrant crimson red */
-    --clr-primary-hover: #be123c;
+    --clr-bg: #0f111a; /* Dark navy */
+    --clr-bg-glass: rgba(15, 17, 26, 0.7);
+    --clr-surface: #1a1d2d;
+    --clr-primary: #eab308; /* Gold/Yellow from logo */
+    --clr-primary-hover: #ca8a04;
     --clr-text: #f8fafc;
-    --clr-text-muted: #94a3b8;
-    --clr-border: rgba(255, 255, 255, 0.1);
+    --clr-text-muted: #cbd5e1;
+    --clr-border: rgba(234, 179, 8, 0.15);
     
     /* Typography */
     --font-heading: 'Outfit', sans-serif;
@@ -37,10 +37,11 @@
     --clr-bg: #f8fafc;
     --clr-bg-glass: rgba(248, 250, 252, 0.7);
     --clr-surface: #ffffff;
-    --clr-primary: #e11d48;
-    --clr-text: #0f172a;
-    --clr-text-muted: #64748b;
-    --clr-border: rgba(0, 0, 0, 0.1);
+    --clr-primary: #eab308;
+    --clr-primary-hover: #ca8a04;
+    --clr-text: #0f111a;
+    --clr-text-muted: #475569;
+    --clr-border: rgba(15, 17, 26, 0.1);
 }
 
 /* Light Theme specific overrides */
@@ -69,6 +70,24 @@
     background: linear-gradient(to right, #ffffff, #e2e8f0);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+}
+
+/* Logo Styles */
+.site-logo {
+    height: 50px;
+    transition: filter 0.3s ease;
+}
+
+.site-logo.admin {
+    height: 40px;
+}
+
+/* Glow/Contour for Dark Theme to make dark logo visible */
+[data-theme="dark"] .site-logo {
+    filter: drop-shadow(1px 1px 0px rgba(255,255,255,0.8))
+            drop-shadow(-1px -1px 0px rgba(255,255,255,0.8))
+            drop-shadow(1px -1px 0px rgba(255,255,255,0.8))
+            drop-shadow(-1px 1px 0px rgba(255,255,255,0.8));
 }
 
 /* Base Styles */

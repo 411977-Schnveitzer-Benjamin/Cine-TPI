@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administrador - Cine TPI</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <!-- Feather Icons -->
+    <script src="https://unpkg.com/feather-icons"></script>
+</head>
+<body class="admin-body">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <a href="index.html" class="logo" style="display: flex; align-items: center;">
+                <img src="img/logo.png" alt="Cines Hollywood" class="site-logo admin">
+            </a>
+        </div>
+        
+        <div class="sidebar-profile">
+            <img src="https://ui-avatars.com/api/?name=Admin&background=eab308&color=fff&rounded=true" alt="Admin Avatar" class="profile-avatar">
+            <div class="profile-info">
+                <h3 class="profile-name">Administrador</h3>
+                <span class="profile-badge">Admin</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <ul class="nav-list">
+                <li class="nav-item active">
+                    <a href="#" class="nav-link" data-target="dashboard">
+                        <i data-feather="grid"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-target="peliculas">
+                        <i data-feather="film"></i>
+                        <span>Películas & Funciones</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-target="salas">
+                        <i data-feather="layout"></i>
+                        <span>Salas & Butacas</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-target="confiteria">
+                        <i data-feather="coffee"></i>
+                        <span>Confitería</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-target="usuarios">
+                        <i data-feather="users"></i>
+                        <span>Usuarios & Socios</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="btn btn-outline btn-logout" id="adminLogout">
+                <i data-feather="log-out"></i>
+                <span>Cerrar Sesión</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Top Header -->
+        <header class="top-header">
+            <div class="search-bar">
+                <i data-feather="search" class="search-icon"></i>
+                <input type="text" placeholder="Buscar...">
+            </div>
+            
+            <div class="header-actions">
+                <button class="btn-icon" id="themeToggleAdmin" title="Cambiar tema">
+                    <i data-feather="sun" class="sun-icon"></i>
+                    <i data-feather="moon" class="moon-icon" style="display: none;"></i>
+                </button>
+            </div>
+        </header>
+
+        <div class="dashboard-content" id="main-container">
+            
+            <!-- SECTION: DASHBOARD -->
+            <section id="section-dashboard" class="admin-section">
+                <!-- Metric Cards -->
+                <div class="metric-cards">
+                    <div class="card metric-card">
+                        <div class="metric-icon" style="color: var(--clr-primary); background: rgba(234, 179, 8, 0.1);">
+                            <i data-feather="dollar-sign"></i>
+                        </div>
+                        <div class="metric-info">
+                            <h3>Ingresos del Día</h3>
+                            <p class="metric-value">$45,230</p>
+                        </div>
+                    </div>
+                    <div class="card metric-card">
+                        <div class="metric-icon" style="color: #10b981; background: rgba(16, 185, 129, 0.1);">
+                            <i data-feather="ticket"></i>
+                        </div>
+                        <div class="metric-info">
+                            <h3>Entradas Vendidas</h3>
+                            <p class="metric-value">1,204</p>
+                        </div>
+                    </div>
+                    <div class="card metric-card">
+                        <div class="metric-icon" style="color: #3b82f6; background: rgba(59, 130, 246, 0.1);">
+                            <i data-feather="video"></i>
+                        </div>
+                        <div class="metric-info">
+                            <h3>Funciones Activas</h3>
+                            <p class="metric-value">24</p>
+                        </div>
+                    </div>
+                    <div class="card metric-card">
+                        <div class="metric-icon" style="color: #8b5cf6; background: rgba(139, 92, 246, 0.1);">
+                            <i data-feather="star"></i>
+                        </div>
+                        <div class="metric-info">
+                            <h3>Socios VIP</h3>
+                            <p class="metric-value">342</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="card chart-section">
+                    <div class="section-header">
+                        <h2>Ventas de la semana</h2>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-bars">
+                            <div class="bar-group"><div class="bar" style="height: 40%;"></div><span class="bar-label">Lun</span></div>
+                            <div class="bar-group"><div class="bar" style="height: 60%;"></div><span class="bar-label">Mar</span></div>
+                            <div class="bar-group"><div class="bar" style="height: 35%;"></div><span class="bar-label">Mié</span></div>
+                            <div class="bar-group"><div class="bar" style="height: 80%;"></div><span class="bar-label">Jue</span></div>
+                            <div class="bar-group"><div class="bar" style="height: 100%;"></div><span class="bar-label">Vie</span></div>
+                            <div class="bar-group"><div class="bar" style="height: 90%;"></div><span class="bar-label">Sáb</span></div>
+                            <div class="bar-group"><div class="bar" style="height: 70%;"></div><span class="bar-label">Dom</span></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION: PELICULAS -->
+            <section id="section-peliculas" class="admin-section" style="display: none;">
+                <div class="card table-section">
+                    <div class="section-header">
+                        <h2>Gestión de Películas y Funciones</h2>
+                        <button class="btn btn-primary btn-sm" onclick="openModal('modalPelicula')">
+                            <i data-feather="plus"></i> Nueva Película
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Póster</th>
+                                    <th>Título</th>
+                                    <th>Duración</th>
+                                    <th>Clasificación</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><img src="https://via.placeholder.com/40x60/1e293b/ffffff?text=P1" alt="Poster" class="table-poster"></td>
+                                    <td><span class="font-bold">Inception</span></td>
+                                    <td>148 min</td>
+                                    <td><span class="badge badge-warning">+13</span></td>
+                                    <td><span class="badge badge-success">Cartelera</span></td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="btn-action edit" title="Editar"><i data-feather="edit-2"></i></button>
+                                            <button class="btn-action delete" title="Borrar"><i data-feather="trash-2"></i></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><img src="https://via.placeholder.com/40x60/1e293b/ffffff?text=P2" alt="Poster" class="table-poster"></td>
+                                    <td><span class="font-bold">Dune: Parte Dos</span></td>
+                                    <td>166 min</td>
+                                    <td><span class="badge badge-warning">+13</span></td>
+                                    <td><span class="badge badge-warning">Próximamente</span></td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="btn-action edit" title="Editar"><i data-feather="edit-2"></i></button>
+                                            <button class="btn-action delete" title="Borrar"><i data-feather="trash-2"></i></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION: SALAS -->
+            <section id="section-salas" class="admin-section" style="display: none;">
+                <!-- Gestión de Salas -->
+                <div class="card table-section" style="margin-bottom: 2rem;">
+                    <div class="section-header">
+                        <h2>Gestión de Salas</h2>
+                        <button class="btn btn-primary btn-sm" onclick="openModal('modalSala')">
+                            <i data-feather="plus"></i> Nueva Sala
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Nombre / Número</th>
+                                    <th>Tipo</th>
+                                    <th>Capacidad</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="font-bold">Sala 1</span></td>
+                                    <td><span class="badge badge-success">2D Regular</span></td>
+                                    <td>150 butacas</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="btn-action edit" title="Editar"><i data-feather="edit-2"></i></button>
+                                            <button class="btn-action delete" title="Borrar"><i data-feather="trash-2"></i></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><span class="font-bold">Sala 2</span></td>
+                                    <td><span class="badge badge-warning">3D</span></td>
+                                    <td>150 butacas</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="btn-action edit" title="Editar"><i data-feather="edit-2"></i></button>
+                                            <button class="btn-action delete" title="Borrar"><i data-feather="trash-2"></i></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Estado de Salas y Butacas en Vivo -->
+                <div class="card table-section">
+                    <div class="section-header">
+                        <h2>Estado de Butacas (En vivo)</h2>
+                    </div>
+                    <div style="padding: 2rem;">
+                        <div style="display: flex; gap: 2rem; margin-bottom: 2rem;">
+                            <select class="form-control" style="width: 250px;">
+                                <option>Sala 1 (2D)</option>
+                                <option>Sala 2 (3D)</option>
+                                <option>Sala 3 (Premium 4K)</option>
+                            </select>
+                            <div style="display: flex; gap: 1rem; align-items: center;">
+                                <span style="display: flex; align-items: center; gap: 0.5rem;"><div style="width: 15px; height: 15px; background: #3b82f6; border-radius: 4px;"></div> Libre</span>
+                                <span style="display: flex; align-items: center; gap: 0.5rem;"><div style="width: 15px; height: 15px; background: #ef4444; border-radius: 4px;"></div> Ocupada</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Mini mapa de butacas (150) -->
+                        <div style="background: var(--clr-bg); padding: 2rem; border-radius: 12px; text-align: center; overflow-x: auto;">
+                            <div style="width: 80%; height: 20px; background: var(--clr-border); margin: 0 auto 3rem auto; border-radius: 10px; opacity: 0.5; max-width: 600px;">PANTALLA</div>
+                            <div id="butacas-grid" style="display: grid; grid-template-columns: repeat(15, 1fr); gap: 8px; max-width: 700px; margin: 0 auto;">
+                                <!-- JS generará las 150 butacas -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION: CONFITERIA -->
+            <section id="section-confiteria" class="admin-section" style="display: none;">
+                <div class="card table-section">
+                    <div class="section-header">
+                        <h2>Gestión de Confitería</h2>
+                        <button class="btn btn-primary btn-sm" onclick="openModal('modalConfiteria')">
+                            <i data-feather="plus"></i> Nuevo Producto
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Imagen</th>
+                                    <th>Producto</th>
+                                    <th>Categoría</th>
+                                    <th>Precio</th>
+                                    <th>Stock</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><img src="https://via.placeholder.com/40x40/1e293b/ffffff?text=P" alt="Pochoclos" class="table-poster" style="border-radius: 50%;"></td>
+                                    <td><span class="font-bold">Combo Pochoclos Grande</span></td>
+                                    <td>Snacks</td>
+                                    <td>$ 6.500</td>
+                                    <td><span class="badge badge-success">Disponible</span></td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="btn-action edit" title="Editar"><i data-feather="edit-2"></i></button>
+                                            <button class="btn-action delete" title="Borrar"><i data-feather="trash-2"></i></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><img src="https://via.placeholder.com/40x40/1e293b/ffffff?text=C" alt="Coca" class="table-poster" style="border-radius: 50%;"></td>
+                                    <td><span class="font-bold">Coca-Cola 1L</span></td>
+                                    <td>Bebidas</td>
+                                    <td>$ 2.800</td>
+                                    <td><span class="badge badge-success">Disponible</span></td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="btn-action edit" title="Editar"><i data-feather="edit-2"></i></button>
+                                            <button class="btn-action delete" title="Borrar"><i data-feather="trash-2"></i></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION: USUARIOS -->
+            <section id="section-usuarios" class="admin-section" style="display: none;">
+                <div class="card table-section">
+                    <div class="section-header">
+                        <h2>Gestión de Usuarios y Socios</h2>
+                        <button class="btn btn-primary btn-sm" onclick="openModal('modalUsuario')">
+                            <i data-feather="user-plus"></i> Nuevo Usuario
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Nombre Completo</th>
+                                    <th>Correo Electrónico</th>
+                                    <th>Tipo de Cuenta</th>
+                                    <th>Rol</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="font-bold">Adminstrador</span></td>
+                                    <td>admin@cineshollywood.com</td>
+                                    <td><span class="badge badge-success">Admin</span></td>
+                                    <td>Administrador</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="btn-action edit" title="Editar"><i data-feather="edit-2"></i></button>
+                                            <button class="btn-action delete" title="Borrar" disabled style="opacity: 0.5;"><i data-feather="trash-2"></i></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><span class="font-bold">Juan Pérez</span></td>
+                                    <td>juanperez@ejemplo.com</td>
+                                    <td><span class="badge badge-warning">Socio VIP</span></td>
+                                    <td>Usuario</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="btn-action edit" title="Editar"><i data-feather="edit-2"></i></button>
+                                            <button class="btn-action delete" title="Borrar"><i data-feather="trash-2"></i></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><span class="font-bold">Maria Gómez</span></td>
+                                    <td>mariag@ejemplo.com</td>
+                                    <td><span class="badge" style="background: rgba(148, 163, 184, 0.2); color: var(--clr-text);">Normal</span></td>
+                                    <td>Usuario</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="btn-action edit" title="Editar"><i data-feather="edit-2"></i></button>
+                                            <button class="btn-action delete" title="Borrar"><i data-feather="trash-2"></i></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Modals -->
+
+    <!-- Modal Película -->
+    <div class="modal" id="modalPelicula">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 class="modal-title">Añadir Película</h2>
+                <button class="close-modal" onclick="closeModal('modalPelicula')">&times;</button>
+            </div>
+            <form>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label">Título de la película</label>
+                        <input type="text" class="form-control" placeholder="Ej: Inception" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Clasificación</label>
+                        <select class="form-control">
+                            <option>ATP</option>
+                            <option>+13</option>
+                            <option>+16</option>
+                            <option>+18</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Imagen de Portada (Proporción 3:4 o 4:3)</label>
+                    <input type="file" class="form-control" accept="image/*" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Estado</label>
+                    <select class="form-control" id="selectEstadoPelicula" onchange="togglePeliculaFields()">
+                        <option value="Cartelera">Cartelera</option>
+                        <option value="Proximos">Próximos Estrenos</option>
+                        <option value="Oculta">Oculta</option>
+                    </select>
+                </div>
+
+                <div id="camposFuncionNormal">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label class="form-label">Días de Función</label>
+                            <input type="text" class="form-control" placeholder="Ej: Jueves a Domingo">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Funciones (Horarios)</label>
+                            <input type="text" class="form-control" placeholder="Ej: 14:00, 16:30, 20:00">
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label class="form-label">Valor de la entrada ($)</label>
+                        <input type="number" class="form-control" placeholder="Ej: 4500">
+                    </div>
+                </div>
+
+                <div id="camposProximoEstreno" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label">Día de Estreno</label>
+                        <input type="date" class="form-control">
+                    </div>
+                </div>
+                
+                <button type="button" class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="closeModal('modalPelicula')">Guardar Película</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Sala -->
+    <div class="modal" id="modalSala">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Añadir Sala</h2>
+                <button class="close-modal" onclick="closeModal('modalSala')">&times;</button>
+            </div>
+            <form>
+                <div class="form-group">
+                    <label class="form-label">Nombre o Número de la sala</label>
+                    <input type="text" class="form-control" placeholder="Ej: Sala 4" required>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label">Tipo de Sala</label>
+                        <select class="form-control">
+                            <option>2D Regular</option>
+                            <option>3D</option>
+                            <option>4D</option>
+                            <option>Premium / VIP</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Capacidad (Butacas)</label>
+                        <input type="number" class="form-control" placeholder="Ej: 150" value="150" required>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="closeModal('modalSala')">Guardar Sala</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Confiteria -->
+    <div class="modal" id="modalConfiteria">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Añadir Producto</h2>
+                <button class="close-modal" onclick="closeModal('modalConfiteria')">&times;</button>
+            </div>
+            <form>
+                <div class="form-group">
+                    <label class="form-label">Nombre del producto</label>
+                    <input type="text" class="form-control" placeholder="Ej: Pochoclos Grandes" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Categoría</label>
+                    <select class="form-control">
+                        <option>Snacks</option>
+                        <option>Bebidas</option>
+                        <option>Combos</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Precio ($)</label>
+                    <input type="number" class="form-control" placeholder="Ej: 6500" required>
+                </div>
+                <button type="button" class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="closeModal('modalConfiteria')">Guardar Producto</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Usuario -->
+    <div class="modal" id="modalUsuario">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Añadir Usuario</h2>
+                <button class="close-modal" onclick="closeModal('modalUsuario')">&times;</button>
+            </div>
+            <form>
+                <div class="form-group">
+                    <label class="form-label">Nombre Completo</label>
+                    <input type="text" class="form-control" placeholder="Ej: Lucas Martínez" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Correo Electrónico</label>
+                    <input type="email" class="form-control" placeholder="ejemplo@correo.com" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tipo de Cuenta</label>
+                    <select class="form-control">
+                        <option>Normal</option>
+                        <option>Socio VIP</option>
+                        <option>Administrador</option>
+                    </select>
+                </div>
+                <button type="button" class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="closeModal('modalUsuario')">Guardar Usuario</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/admin.js"></script>
+    <script>
+        feather.replace();
+
+        // Admin Tabs Logic
+        document.querySelectorAll('.sidebar-nav .nav-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Update active class in sidebar
+                document.querySelectorAll('.sidebar-nav .nav-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                this.parentElement.classList.add('active');
+
+                // Show target section
+                const targetId = 'section-' + this.getAttribute('data-target');
+                document.querySelectorAll('.admin-section').forEach(section => {
+                    section.style.display = 'none';
+                });
+                
+                const targetSection = document.getElementById(targetId);
+                if(targetSection) {
+                    targetSection.style.display = 'block';
+                }
+            });
+        });
+
+        // Modals Logic
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        // Funciones Formulario Película
+        function togglePeliculaFields() {
+            const estado = document.getElementById('selectEstadoPelicula').value;
+            const normal = document.getElementById('camposFuncionNormal');
+            const proximo = document.getElementById('camposProximoEstreno');
+            if (estado === 'Proximos') {
+                normal.style.display = 'none';
+                proximo.style.display = 'block';
+            } else {
+                normal.style.display = 'block';
+                proximo.style.display = 'none';
+            }
+        }
+
+        // Generar las 150 butacas (15 columnas x 10 filas) para el estado en vivo
+        const butacasGrid = document.getElementById('butacas-grid');
+        if (butacasGrid) {
+            for(let i=0; i<150; i++) {
+                const div = document.createElement('div');
+                div.style.aspectRatio = '1';
+                div.style.borderRadius = '4px';
+                div.style.cursor = 'pointer';
+                // Simulamos ocupación aleatoria para que se vea mas real (75% libres, 25% ocupadas)
+                div.style.background = Math.random() > 0.75 ? '#ef4444' : '#3b82f6';
+                
+                // Efecto hover y click
+                div.addEventListener('mouseover', () => div.style.opacity = '0.8');
+                div.addEventListener('mouseout', () => div.style.opacity = '1');
+                div.addEventListener('click', () => {
+                    if (div.style.backgroundColor === 'rgb(239, 68, 68)') {
+                        div.style.backgroundColor = '#3b82f6';
+                    } else {
+                        div.style.backgroundColor = '#ef4444';
+                    }
+                });
+                butacasGrid.appendChild(div);
+            }
+        }
+
+        // Lógica de botones de acción en tablas (Editar / Borrar)
+        document.addEventListener('click', function(e) {
+            // Borrar
+            const btnDelete = e.target.closest('.btn-action.delete');
+            if (btnDelete) {
+                if(confirm('¿Estás seguro de que deseás eliminar este registro?')) {
+                    const row = btnDelete.closest('tr');
+                    if(row) row.remove();
+                }
+            }
+
+            // Editar
+            const btnEdit = e.target.closest('.btn-action.edit');
+            if (btnEdit) {
+                const section = btnEdit.closest('.admin-section');
+                if (section.id === 'section-peliculas') openModal('modalPelicula');
+                else if (section.id === 'section-salas') openModal('modalSala');
+                else if (section.id === 'section-confiteria') openModal('modalConfiteria');
+                else if (section.id === 'section-usuarios') openModal('modalUsuario');
+            }
+        });
+    </script>
+</body>
+</html>

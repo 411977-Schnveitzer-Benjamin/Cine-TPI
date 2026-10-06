@@ -11,8 +11,8 @@
     <!-- Navbar -->
     <header class="navbar scrolled">
         <div class="container navbar-container">
-            <a href="index.html" class="logo">
-                <span class="logo-cine">Cine</span><span class="logo-tpi">TPI</span>
+            <a href="index.html" class="logo" style="display: flex; align-items: center;">
+                <img src="img/logo.png" alt="Cines Hollywood" class="site-logo">
             </a>
             <nav class="nav-links">
                 <a href="cartelera.html" class="nav-link" style="color: var(--clr-text);">Cartelera</a>
@@ -30,12 +30,45 @@
         <h1 class="hero-title" style="font-size: 3.5rem; margin-bottom: 0.5rem;">Nuestra Cartelera</h1>
         <p class="hero-subtitle">Descubrí las mejores películas actualmente en nuestras salas.</p>
         
-        <!-- Contenedor vacío donde luego JS inyectará las películas -->
+        <!-- Contenedor de películas -->
         <div id="peliculas-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 2rem; margin-top: 3rem;">
-            <!-- Placeholder para ver cómo queda -->
-            <div style="background: var(--clr-surface); border: 1px solid var(--clr-border); border-radius: 12px; height: 350px; display: flex; align-items: center; justify-content: center; color: var(--clr-text-muted);">Película 1</div>
-            <div style="background: var(--clr-surface); border: 1px solid var(--clr-border); border-radius: 12px; height: 350px; display: flex; align-items: center; justify-content: center; color: var(--clr-text-muted);">Película 2</div>
-            <div style="background: var(--clr-surface); border: 1px solid var(--clr-border); border-radius: 12px; height: 350px; display: flex; align-items: center; justify-content: center; color: var(--clr-text-muted);">Película 3</div>
+            
+            <div class="movie-card" style="background: var(--clr-surface); border: 1px solid var(--clr-border); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;">
+                <img src="https://via.placeholder.com/300x450/1e293b/ffffff?text=Inception" alt="Inception" style="width: 100%; height: 350px; object-fit: cover;">
+                <div style="padding: 1.5rem;">
+                    <h3 style="margin-bottom: 0.5rem; font-size: 1.25rem;">Inception</h3>
+                    <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                        <span class="badge badge-warning">+13</span>
+                        <span style="font-size: 0.9rem; color: var(--clr-text-muted);">148 min</span>
+                    </div>
+                    <button class="btn btn-primary" style="width: 100%;" onclick="window.location.href='reserva.html'">Ver Funciones</button>
+                </div>
+            </div>
+
+            <div class="movie-card" style="background: var(--clr-surface); border: 1px solid var(--clr-border); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;">
+                <img src="https://via.placeholder.com/300x450/1e293b/ffffff?text=The+Dark+Knight" alt="The Dark Knight" style="width: 100%; height: 350px; object-fit: cover;">
+                <div style="padding: 1.5rem;">
+                    <h3 style="margin-bottom: 0.5rem; font-size: 1.25rem;">The Dark Knight</h3>
+                    <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                        <span class="badge badge-danger">+16</span>
+                        <span style="font-size: 0.9rem; color: var(--clr-text-muted);">152 min</span>
+                    </div>
+                    <button class="btn btn-primary" style="width: 100%;" onclick="window.location.href='reserva.html'">Ver Funciones</button>
+                </div>
+            </div>
+
+            <div class="movie-card" style="background: var(--clr-surface); border: 1px solid var(--clr-border); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;">
+                <img src="https://via.placeholder.com/300x450/1e293b/ffffff?text=Interstellar" alt="Interstellar" style="width: 100%; height: 350px; object-fit: cover;">
+                <div style="padding: 1.5rem;">
+                    <h3 style="margin-bottom: 0.5rem; font-size: 1.25rem;">Interstellar</h3>
+                    <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                        <span class="badge badge-success">ATP</span>
+                        <span style="font-size: 0.9rem; color: var(--clr-text-muted);">169 min</span>
+                    </div>
+                    <button class="btn btn-primary" style="width: 100%;">Ver Funciones</button>
+                </div>
+            </div>
+
         </div>
     </div>
 </body>
