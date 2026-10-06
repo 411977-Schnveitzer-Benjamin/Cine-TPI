@@ -21,14 +21,22 @@
             </a>
             
             <nav class="nav-links">
-                <a href="#cartelera" class="nav-link">Cartelera</a>
-                <a href="#estrenos" class="nav-link">Próximos Estrenos</a>
-                <a href="#promociones" class="nav-link">Promociones</a>
+                <a href="cartelera.html" class="nav-link">Cartelera</a>
+                <a href="estrenos.html" class="nav-link">Próximos Estrenos</a>
+                <a href="promociones.html" class="nav-link">Promociones</a>
+                <a href="#" class="nav-link" id="navAdminPanel" style="display: none; color: var(--clr-primary); font-weight: bold;">Panel De Administrador</a>
             </nav>
 
             <div class="auth-buttons">
+                <button class="btn btn-icon" id="themeToggle" title="Cambiar tema">
+                    <!-- Sol para volver a claro (o indicar que estamos en oscuro) -->
+                    <svg id="sunIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                    <!-- Luna para volver a oscuro (oculto por defecto) -->
+                    <svg id="moonIcon" style="display: none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                </button>
                 <button class="btn btn-outline" id="btnLogin">Iniciar Sesión</button>
                 <button class="btn btn-primary" id="btnRegister">Registrarse</button>
+                <button class="btn btn-outline" id="btnLogout" style="display: none;">Cerrar Sesión</button>
             </div>
             
             <button class="mobile-menu-btn" id="mobileMenuBtn">
@@ -50,6 +58,109 @@
             </div>
         </div>
     </section>
+
+    <!-- Cartelera Carousel Section -->
+    <section class="carousel-section" style="padding: 4rem 0;">
+        <div class="container">
+            <h2 style="font-size: 2rem; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
+                En Cartelera
+                <div class="carousel-controls">
+                    <button class="btn btn-icon" id="prevSlide"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+                    <button class="btn btn-icon" id="nextSlide"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
+                </div>
+            </h2>
+            <div class="carousel-container">
+                <div class="carousel-track" id="carouselTrack">
+                    <!-- Movie Posters -->
+                    <div class="carousel-slide">
+                        <img src="https://via.placeholder.com/300x450/e11d48/ffffff?text=Pelicula+1" alt="Película 1" class="carousel-img">
+                    </div>
+                    <div class="carousel-slide">
+                        <img src="https://via.placeholder.com/300x450/1e293b/ffffff?text=Pelicula+2" alt="Película 2" class="carousel-img">
+                    </div>
+                    <div class="carousel-slide">
+                        <img src="https://via.placeholder.com/300x450/e11d48/ffffff?text=Pelicula+3" alt="Película 3" class="carousel-img">
+                    </div>
+                    <div class="carousel-slide">
+                        <img src="https://via.placeholder.com/300x450/1e293b/ffffff?text=Pelicula+4" alt="Película 4" class="carousel-img">
+                    </div>
+                    <div class="carousel-slide">
+                        <img src="https://via.placeholder.com/300x450/e11d48/ffffff?text=Pelicula+5" alt="Película 5" class="carousel-img">
+                    </div>
+                    <div class="carousel-slide">
+                        <img src="https://via.placeholder.com/300x450/1e293b/ffffff?text=Pelicula+6" alt="Película 6" class="carousel-img">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Login Modal -->
+    <div class="modal" id="loginModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Iniciar Sesión</h2>
+                <button class="close-modal" id="closeLogin">&times;</button>
+            </div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label class="form-label">Correo electrónico / Usuario</label>
+                    <input type="text" class="form-control" id="loginEmail" placeholder="ejemplo@correo.com" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Contraseña</label>
+                    <input type="password" class="form-control" id="loginPassword" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Ingresar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div class="modal" id="registerModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Crear Cuenta</h2>
+                <button class="close-modal" id="closeRegister">&times;</button>
+            </div>
+            <form id="registerForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Nombre</label>
+                        <input type="text" class="form-control" id="regNombre" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Apellido</label>
+                        <input type="text" class="form-control" id="regApellido" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">DNI</label>
+                        <input type="text" class="form-control" id="regDni" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Teléfono</label>
+                        <input type="tel" class="form-control" id="regTelefono" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Correo electrónico</label>
+                    <input type="email" class="form-control" id="regEmail" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Contraseña</label>
+                    <input type="password" class="form-control" id="regPassword" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Confirmar Contraseña</label>
+                    <input type="password" class="form-control" id="regConfirmPassword" required>
+                    <span class="error-text" id="passwordError">Las contraseñas no coinciden</span>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Registrarme</button>
+            </form>
+        </div>
+    </div>
 
     <script src="js/main.js"></script>
 </body>

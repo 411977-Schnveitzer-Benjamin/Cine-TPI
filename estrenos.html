@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Próximos Estrenos - Cine TPI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <header class="navbar scrolled">
+        <div class="container navbar-container">
+            <a href="index.html" class="logo">
+                <span class="logo-cine">Cine</span><span class="logo-tpi">TPI</span>
+            </a>
+            <nav class="nav-links">
+                <a href="cartelera.html" class="nav-link">Cartelera</a>
+                <a href="estrenos.html" class="nav-link" style="color: var(--clr-text);">Próximos Estrenos</a>
+                <a href="promociones.html" class="nav-link">Promociones</a>
+            </nav>
+            <div class="auth-buttons">
+                <a href="index.html" class="btn btn-outline">Volver al inicio</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Content -->
+    <div class="container" style="padding-top: 120px; min-height: 80vh;">
+        <h1 class="hero-title" style="font-size: 3.5rem; margin-bottom: 0.5rem;">Próximos Estrenos</h1>
+        <p class="hero-subtitle">Mantenete al tanto de lo que se viene en la pantalla grande.</p>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 2rem; margin-top: 3rem;">
+            <!-- Placeholder para próximos estrenos -->
+            <div style="background: var(--clr-surface); border: 1px dashed var(--clr-primary); border-radius: 12px; height: 350px; display: flex; align-items: center; justify-content: center; color: var(--clr-primary); flex-direction: column;">
+                <span style="font-weight: bold; margin-bottom: 10px;">Próximamente</span>
+                <span style="font-size: 0.9rem;">Diciembre 2026</span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
