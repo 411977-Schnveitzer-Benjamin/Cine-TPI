@@ -6,18 +6,27 @@
     <title>Promociones - Cine TPI</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
+    <script>
+        // Check Auth for Promociones (VIP or Admin only)
+        const idRol = localStorage.getItem('id_rol');
+        if (idRol !== '2' && idRol !== '3') {
+            alert('Acceso Denegado: La sección de promociones es exclusiva para miembros VIP y Administradores. Por favor inicie sesión.');
+            window.location.href = 'index.html';
+        }
+    </script>
 </head>
 <body>
     <!-- Navbar -->
     <header class="navbar scrolled">
         <div class="container navbar-container">
-            <a href="index.html" class="logo">
-                <span class="logo-cine">Cine</span><span class="logo-tpi">TPI</span>
+            <a href="index.html" class="logo" style="display: flex; align-items: center;">
+                <img src="img/logo.png" alt="Cines Hollywood" class="site-logo">
             </a>
             <nav class="nav-links">
                 <a href="cartelera.html" class="nav-link">Cartelera</a>
                 <a href="estrenos.html" class="nav-link">Próximos Estrenos</a>
                 <a href="promociones.html" class="nav-link" style="color: var(--clr-text);">Promociones</a>
+                <a href="admin.html" class="nav-link" id="navAdminPanel" style="display: none; color: var(--clr-primary); font-weight: bold;">Panel De Administrador</a>
             </nav>
             <div class="auth-buttons">
                 <a href="index.html" class="btn btn-outline">Volver al inicio</a>
@@ -30,17 +39,40 @@
         <h1 class="hero-title" style="font-size: 3.5rem; margin-bottom: 0.5rem;">Promociones Exclusivas</h1>
         <p class="hero-subtitle">Conocé nuestros combos y beneficios de membresía.</p>
         
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem; margin-top: 3rem;">
-            <!-- Placeholder para combos -->
-            <div style="background: var(--clr-surface); border: 1px solid var(--clr-border); border-radius: 12px; padding: 2rem; text-align: center;">
-                <h3 style="margin-bottom: 1rem; color: var(--clr-primary);">Combo 1</h3>
-                <p style="color: var(--clr-text-muted);">2 Entradas + 1 Pochoclo Grande</p>
-            </div>
-            <div style="background: var(--clr-surface); border: 1px solid var(--clr-border); border-radius: 12px; padding: 2rem; text-align: center;">
-                <h3 style="margin-bottom: 1rem; color: var(--clr-primary);">Combo 2</h3>
-                <p style="color: var(--clr-text-muted);">1 Entrada + 1 Gaseosa + 1 Nachos</p>
-            </div>
+        <div id="promociones-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem; margin-top: 3rem;">
+            <!-- JS inyectará las promos aquí -->
         </div>
     </div>
+
+    <script src="js/confiteria.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('promociones-container');
+            const items = getConfiteria().filter(item => item.categoria === 'Combos');
+
+            if(items.length === 0) {
+                container.innerHTML = '<p>No hay promociones activas en este momento.</p>';
+                return;
+            }
+
+            container.innerHTML = items.map(p => `
+                <div style="background: var(--clr-surface); border: 1px solid var(--clr-border); border-radius: 12px; padding: 2rem; text-align: center; display: flex; flex-direction: column;">
+                    <img src="${p.image}" alt="${p.nombre}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px; margin-bottom: 1rem;">
+                    <h3 style="margin-bottom: 0.5rem; color: var(--clr-primary); font-size: 1.5rem;">${p.nombre}</h3>
+                    <p style="color: var(--clr-text-muted); margin-bottom: 1rem; flex-grow: 1;">${p.descripcion}</p>
+                    <p style="font-weight: bold; color: var(--clr-text); font-size: 1.25rem; margin-bottom: 1.5rem;">$ ${p.precio.toLocaleString('es-AR')}</p>
+                    <button class="btn btn-primary" style="width: 100%;" onclick="comprarPromo(${p.id})">Comprar Promo</button>
+                </div>
+            `).join('');
+        });
+
+        function comprarPromo(id) {
+            // El usuario dijo que si contiene una entrada, lo lleve a seleccionar pelicula/funcion.
+            // Para simplificar, mandamos a cartelera para que elija.
+            alert('¡Excelente elección! Seleccioná tu película y función para utilizar esta promo.');
+            window.location.href = 'cartelera.html?promo=' + id;
+        }
+    </script>
+    <script src="js/main.js"></script>
 </body>
 </html>
