@@ -1,3 +1,73 @@
+// Custom Modal Alert & Confirm System
+window.customAlerts = new Set();
+window.showCustomModal = function(message, isConfirm = false, onConfirm = null) {
+    if (!isConfirm && window.customAlerts.has(message)) return; 
+    if (!isConfirm) window.customAlerts.add(message);
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal';
+    overlay.style.zIndex = '99999';
+
+    const modalContent = document.createElement('div');
+    modalContent.className = 'modal-content';
+    modalContent.style.maxWidth = '450px';
+    modalContent.style.textAlign = 'center';
+    
+    const title = document.createElement('h3');
+    title.style.marginBottom = '1.5rem';
+    title.innerText = message;
+    
+    const btnContainer = document.createElement('div');
+    btnContainer.style.display = 'flex';
+    btnContainer.style.gap = '1rem';
+    btnContainer.style.justifyContent = 'center';
+    
+    const btnOk = document.createElement('button');
+    btnOk.className = 'btn btn-primary';
+    btnOk.innerText = 'Aceptar';
+    
+    if (isConfirm) {
+        const btnCancel = document.createElement('button');
+        btnCancel.className = 'btn btn-outline';
+        btnCancel.innerText = 'Cancelar';
+        btnCancel.onclick = () => {
+            overlay.classList.remove('active');
+            setTimeout(() => overlay.remove(), 400);
+        };
+        btnContainer.appendChild(btnOk);
+        btnContainer.appendChild(btnCancel);
+        
+        btnOk.onclick = () => {
+            overlay.classList.remove('active');
+            setTimeout(() => overlay.remove(), 400);
+            if(onConfirm) onConfirm();
+        };
+    } else {
+        btnContainer.appendChild(btnOk);
+        btnOk.onclick = () => {
+            overlay.classList.remove('active');
+            setTimeout(() => {
+                overlay.remove();
+                window.customAlerts.delete(message);
+            }, 400);
+        };
+    }
+    
+    modalContent.appendChild(title);
+    modalContent.appendChild(btnContainer);
+    overlay.appendChild(modalContent);
+    document.body.appendChild(overlay);
+    
+    // Trigger animation
+    void overlay.offsetWidth;
+    overlay.classList.add('active');
+};
+
+// Override native alert globally
+window.alert = function(message) {
+    window.showCustomModal(message, false);
+};
+
 // Change navbar background on scroll
 window.addEventListener('scroll', () => {
     const navbar = document.querySelector('.navbar');
@@ -194,10 +264,12 @@ function addToCart(item) {
 }
 
 window.removeCartItem = function(index) {
-    const cart = getCart();
-    cart.splice(index, 1);
-    saveCart(cart);
-    renderCartItems();
+    window.showCustomModal('¿Seguro que desea eliminar?', true, () => {
+        const cart = getCart();
+        cart.splice(index, 1);
+        saveCart(cart);
+        renderCartItems();
+    });
 };
 
 window.updateCartConfiteriaQty = function(index, change) {
