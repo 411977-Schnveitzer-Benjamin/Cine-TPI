@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "Nuevo perfil",
+    "Projects": [
+      {
+        "Path": "CineHollywoodTPI\\CineHollywoodTPI.API.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "CineHollywoodTPI.Web\\CineHollywoodTPI.Web.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]
