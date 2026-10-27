@@ -1,0 +1,6 @@
+@CineHollywoodTPI_HostAddress = http://localhost:5191
+
+GET {{CineHollywoodTPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

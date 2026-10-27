@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="CineHollywoodTPI.Data/CineHollywoodTPI.Data.csproj" />
+  <Project Path="CineHollywoodTPI.Web/CineHollywoodTPI.Web.csproj" />
+  <Project Path="CineHollywoodTPI/CineHollywoodTPI.API.csproj" />
+</Solution>
