@@ -1,0 +1,107 @@
+﻿using CineHollywoodTPI.Data.DTOs;
+using CineHollywoodTPI.Data.Interfaces;
+using CineHollywoodTPI.Data.Models;
+using Microsoft.AspNetCore.Mvc;
+
+namespace CineHollywoodTPI.API.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public class VentaController : ControllerBase
+    {
+        private readonly IVentaRepository _ventaRepository;
+
+        public VentaController(IVentaRepository ventaRepository)
+        {
+            _ventaRepository = ventaRepository;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
+        {
+            try
+            {
+                var ventas = await _ventaRepository.GetAllAsync();
+                return Ok(ventas);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+            }
+        }
+
+        [HttpGet("totales")]
+        public async Task<IActionResult> GetTotalesNegocio()
+        {
+            try
+            {
+                var resumen = await _ventaRepository.GetTotalesAsync();
+                return Ok(resumen);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error al calcular los totales del negocio: {ex.Message}");
+            }
+        }
+
+        [HttpGet("{id:int}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            try
+            {
+                var venta = await _ventaRepository.GetByIdAsync(id);
+                if (venta == null)
+                    return NotFound($"No existe una venta con ID {id}.");
+
+                return Ok(venta);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error al buscar por ID: {ex.Message}");
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> RegistrarVenta([FromBody] VentaCompletaDTO dto)
+        {
+            try
+            {
+                if (dto == null)
+                    return BadRequest("La venta enviada es inválida.");
+
+                var venta = new Venta
+                {
+                    IdCliente = dto.IdCliente,
+                    IdEmpleado = dto.IdEmpleado,
+                    IdCanal = dto.IdCanal,
+                    FechaHora = dto.FechaHora ?? DateTime.Now
+                };
+
+                var entradas = dto.Entradas.Select(e => new Entrada
+                {
+                    IdReserva = e.IdReserva,
+                    IdFuncion = e.IdFuncion,
+                    IdButaca = e.IdButaca,
+                    IdTipoEspectador = e.IdTipoEspectador,
+                    PrecioFinal = e.PrecioFinal
+                }).ToList();
+
+                var formasPago = dto.FormasPago?.Select(fp => new VentaxFormaPago
+                {
+                    IdFormaPago = fp.IdFormaPago,
+                    Monto = fp.Monto
+                }).ToList();
+
+                var resultado = await _ventaRepository.RegistrarVentaAsync(venta, entradas, formasPago);
+                if (!resultado)
+                    return StatusCode(500, "No se pudo registrar la venta. La operación fue revertida.");
+
+                return Ok(new { mensaje = "Venta registrada con éxito." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno al registrar la venta: {ex.Message}");
+            }
+        }
+    }
+}

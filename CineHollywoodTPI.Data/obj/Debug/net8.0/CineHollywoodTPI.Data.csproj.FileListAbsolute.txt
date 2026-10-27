@@ -1,0 +1,15 @@
+C:\Users\matit\source\repos\CineHollywoodTPI\CineHollywoodTPI.Data\bin\Debug\net8.0\CineHollywoodTPI.Data.deps.json
+C:\Users\matit\source\repos\CineHollywoodTPI\CineHollywoodTPI.Data\bin\Debug\net8.0\CineHollywoodTPI.Data.runtimeconfig.json
+C:\Users\matit\source\repos\CineHollywoodTPI\CineHollywoodTPI.Data\bin\Debug\net8.0\CineHollywoodTPI.Data.dll
+C:\Users\matit\source\repos\CineHollywoodTPI\CineHollywoodTPI.Data\bin\Debug\net8.0\CineHollywoodTPI.Data.pdb
+C:\Users\matit\source\repos\CineHollywoodTPI\CineHollywoodTPI.Data\obj\Debug\net8.0\CineHollywoodTPI.Data.csproj.AssemblyReference.cache
+C:\Users\matit\source\repos\CineHollywoodTPI\CineHollywoodTPI.Data\obj\Debug\net8.0\CineHollywoodTPI.Data.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\matit\source\repos\CineHollywoodTPI\CineHollywoodTPI.Data\obj\Debug\net8.0\CineHollywoodTPI.Data.AssemblyInfoInputs.cache
+C:\Users\matit\source\repos\CineHollywoodTPI\CineHollywoodTPI.Data\obj\Debug\net8.0\CineHollywoodTPI.Data.AssemblyInfo.cs
+C:\Users\matit\source\repos\CineHollywoodTPI\CineHollywoodTPI.Data\obj\Debug\net8.0\CineHollywoodTPI.Data.csproj.CoreCompileInputs.cache
+C:\Users\matit\source\repos\CineHollywoodTPI\CineHollywoodTPI.Data\obj\Debug\net8.0\CineHollywoodTPI.Data.dll
+C:\Users\matit\source\repos\CineHollywoodTPI\CineHollywoodTPI.Data\obj\Debug\net8.0\refint\CineHollywoodTPI.Data.dll
+C:\Users\matit\source\repos\CineHollywoodTPI\CineHollywoodTPI.Data\obj\Debug\net8.0\CineHollywoodTPI.Data.pdb
+C:\Users\matit\source\repos\CineHollywoodTPI\CineHollywoodTPI.Data\obj\Debug\net8.0\CineHollywoodTPI.Data.genruntimeconfig.cache
+C:\Users\matit\source\repos\CineHollywoodTPI\CineHollywoodTPI.Data\obj\Debug\net8.0\ref\CineHollywoodTPI.Data.dll
+C:\Users\matit\source\repos\CineHollywoodTPI\CineHollywoodTPI.Data\obj\Debug\net8.0\CineHoll.A89613D9.Up2Date

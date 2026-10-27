@@ -1,0 +1,19 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using CineHollywoodTPI.Data.Models;
+
+namespace CineHollywoodTPI.Data.Interfaces
+{
+    public interface IVentaRepository
+    {
+        Task<IEnumerable<Venta>> GetAllAsync(); // Para alimentar los gráficos del Dashboard
+        Task<Venta?> GetByIdAsync(int id); // Para consultar una venta con sus entradas
+        Task<bool> RegistrarVentaAsync(
+            Venta venta,
+            IEnumerable<Entrada> entradas,
+            IEnumerable<VentaxFormaPago>? formasPago = null); // Transacción Maestro-Detalle + formas de pago
+    }
+}
