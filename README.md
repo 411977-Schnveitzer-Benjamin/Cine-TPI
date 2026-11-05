@@ -162,7 +162,6 @@ CineHollywoodTPI.slnx                  ← la solución (3 proyectos)
 |---|---|
 | `SistemaCineBdFinal_actual.sql` | ✅ Script de la base **actual** (estructura + datos). Es el que hay que usar |
 | `SistemaCineBdFinal.sql` | Script viejo, desactualizado (ver sección 1) |
-| `CineHollywoodTPI.Controllers/VentaController.cs` | Archivo vacío de una versión vieja; no pertenece a ningún proyecto y se puede borrar |
 
 ---
 
