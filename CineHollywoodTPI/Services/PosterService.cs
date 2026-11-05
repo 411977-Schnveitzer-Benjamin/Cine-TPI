@@ -24,9 +24,9 @@ namespace CineHollywoodTPI.API.Services
         public async Task<string> GuardarArchivoAsync(IFormFile archivo)
         {
             if (archivo == null || archivo.Length == 0)
-                throw new InvalidOperationException("No se recibió ninguna imagen.");
+                throw new NegocioException("No se recibió ninguna imagen.");
             if (archivo.Length > TamanioMaximo)
-                throw new InvalidOperationException("La imagen no puede superar los 5 MB.");
+                throw new NegocioException("La imagen no puede superar los 5 MB.");
 
             using var ms = new MemoryStream();
             await archivo.CopyToAsync(ms);
@@ -39,7 +39,7 @@ namespace CineHollywoodTPI.API.Services
         {
             if (!Uri.TryCreate(url?.Trim(), UriKind.Absolute, out var uri) ||
                 (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
-                throw new InvalidOperationException("El link no es válido (tiene que empezar con http:// o https://).");
+                throw new NegocioException("El link no es válido (tiene que empezar con http:// o https://).");
 
             var (bytes, contentType) = await DescargarAsync(uri);
 
@@ -47,7 +47,7 @@ namespace CineHollywoodTPI.API.Services
             {
                 var html = System.Text.Encoding.UTF8.GetString(bytes);
                 var imagen = BuscarImagenPrincipal(html, uri)
-                    ?? throw new InvalidOperationException(
+                    ?? throw new NegocioException(
                         "El link es una página web y no se encontró una imagen en ella. Usá el link directo de la imagen (clic derecho sobre la imagen → \"Copiar dirección de imagen\").");
 
                 (bytes, contentType) = await DescargarAsync(imagen);
@@ -70,14 +70,14 @@ namespace CineHollywoodTPI.API.Services
             using var resp = await http.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead);
 
             if (!resp.IsSuccessStatusCode)
-                throw new InvalidOperationException($"No se pudo descargar el link (el sitio respondió {(int)resp.StatusCode}).");
+                throw new NegocioException($"No se pudo descargar el link (el sitio respondió {(int)resp.StatusCode}).");
 
             if (resp.Content.Headers.ContentLength > TamanioMaximo)
-                throw new InvalidOperationException("La imagen no puede superar los 5 MB.");
+                throw new NegocioException("La imagen no puede superar los 5 MB.");
 
             var bytes = await resp.Content.ReadAsByteArrayAsync();
             if (bytes.Length > TamanioMaximo)
-                throw new InvalidOperationException("La imagen no puede superar los 5 MB.");
+                throw new NegocioException("La imagen no puede superar los 5 MB.");
 
             var tipo = resp.Content.Headers.ContentType?.MediaType?.ToLowerInvariant() ?? "";
             return (bytes, tipo);
@@ -105,7 +105,7 @@ namespace CineHollywoodTPI.API.Services
         {
             // Verificamos que realmente sea una imagen mirando los primeros bytes (no la extensión)
             var extension = DetectarExtension(bytes)
-                ?? throw new InvalidOperationException("El archivo no es una imagen válida (se aceptan JPG, PNG, WEBP o GIF).");
+                ?? throw new NegocioException("El archivo no es una imagen válida (se aceptan JPG, PNG, WEBP o GIF).");
 
             var nombre = $"{Guid.NewGuid():N}{extension}";
             await File.WriteAllBytesAsync(Path.Combine(_carpeta, nombre), bytes);

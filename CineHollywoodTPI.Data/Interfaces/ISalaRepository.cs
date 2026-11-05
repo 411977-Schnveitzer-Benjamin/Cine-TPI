@@ -1,20 +1,23 @@
 using CineHollywoodTPI.Data.DTOs;
+using CineHollywoodTPI.Data.Models;
 
 namespace CineHollywoodTPI.Data.Interfaces
 {
+    // Solo acceso a datos de SALA / BUTACA. Las reglas están en SalaService.
     public interface ISalaRepository
     {
         Task<IEnumerable<SalaDetalleDTO>> GetAllAsync();
         Task<IEnumerable<ItemDTO>> GetComplejosAsync();
+        Task<Sala?> GetByIdAsync(int idSala); // incluye butacas
 
-        // Crea la sala y genera sus butacas (filas x butacas por fila) en una transacción
-        Task<int> CrearAsync(SalaGuardarDTO dto);
+        Task<bool> ExisteTipoSalaAsync(int idTipoSala);
+        Task<bool> ExisteComplejoAsync(int idComplejo);
+        Task<bool> ExisteNombreAsync(string nombre, int? idComplejo, int? excluirIdSala);
+        Task<bool> TieneButacasUsadasAsync(int idSala); // entradas vendidas o reservas
+        Task<bool> TieneFuncionesAsync(int idSala);
 
-        // Modifica nombre/tipo/complejo. La distribución de butacas solo se puede
-        // cambiar si la sala no tiene entradas vendidas ni reservas.
-        Task<bool> ActualizarAsync(int idSala, SalaGuardarDTO dto);
-
-        // Solo si la sala no tiene funciones cargadas
-        Task<bool> EliminarAsync(int idSala);
+        Task<int> CrearAsync(Sala sala); // la sala viene con sus butacas
+        Task ActualizarAsync(Sala sala, IEnumerable<Butaca>? nuevasButacas); // si vienen butacas, reemplaza las anteriores
+        Task EliminarAsync(Sala sala);
     }
 }

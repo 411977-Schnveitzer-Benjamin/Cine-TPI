@@ -1,5 +1,6 @@
 /* =========================================================================
    index.js - Carrusel 3D con las películas en cartelera
+   (manipulación del DOM + eventos: se mueven los slides cambiando su transform)
    ========================================================================= */
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -15,19 +16,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     if (!peliculas.length) {
+        track.style.height = 'auto';
         track.innerHTML = htmlVacio('No hay películas en cartelera por el momento.');
-        document.querySelector('.carousel-controls').hidden = true;
+        document.getElementById('carouselControles').hidden = true;
         return;
     }
 
     track.innerHTML = peliculas.map((p, i) => `
         <button type="button" class="carousel-slide" data-index="${i}" data-id="${p.idPelicula}" aria-label="Comprar entradas para ${esc(p.titulo)}">
             ${posterHTML(p)}
-            <span class="carousel-caption">${esc(p.titulo)}</span>
+            <span class="carousel-caption-3d">${esc(p.titulo)}</span>
         </button>`).join('');
 
     const slides = [...track.querySelectorAll('.carousel-slide')];
-    let actual = 0;
+    let actual = 0; // índice del slide del centro
 
     function actualizar() {
         slides.forEach((slide, i) => {
@@ -58,8 +60,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         else { actual = i; actualizar(); }
     }));
 
-    document.getElementById('prevSlide').onclick = () => { actual = (actual - 1 + slides.length) % slides.length; actualizar(); };
-    document.getElementById('nextSlide').onclick = () => { actual = (actual + 1) % slides.length; actualizar(); };
+    document.getElementById('prevSlide').addEventListener('click', () => { actual = (actual - 1 + slides.length) % slides.length; actualizar(); });
+    document.getElementById('nextSlide').addEventListener('click', () => { actual = (actual + 1) % slides.length; actualizar(); });
 
     actualizar();
 });

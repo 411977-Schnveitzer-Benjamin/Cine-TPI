@@ -72,21 +72,23 @@ function iniciarLayout() {
         dibujarGraficoMensual();
     });
     iconoTema();
-
-    // Menú lateral en celulares
-    $('sidebarToggle').onclick = () => document.body.classList.toggle('sidebar-open');
-    $('sidebarBackdrop').onclick = () => document.body.classList.remove('sidebar-open');
+    // El menú lateral en celulares lo abre/cierra Bootstrap (offcanvas): no hace falta JS propio
 }
 
 function mostrarSeccion(nombre) {
     if (!TITULOS[nombre]) nombre = 'dashboard';
 
     document.querySelectorAll('.admin-section').forEach(s => s.hidden = s.id !== `section-${nombre}`);
-    document.querySelectorAll('.sidebar .nav-item').forEach(li =>
-        li.classList.toggle('active', li.querySelector('.nav-link').dataset.target === nombre));
+    document.querySelectorAll('.sidebar .nav-link').forEach(a => {
+        const activo = a.dataset.target === nombre;
+        a.classList.toggle('active', activo);
+        if (activo) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+    });
     $('tituloSeccion').textContent = TITULOS[nombre];
     document.title = `${TITULOS[nombre]} - Panel Cines Hollywood`;
-    document.body.classList.remove('sidebar-open');
+
+    // En celulares, al elegir una sección se cierra el menú
+    bootstrap.Offcanvas.getInstance($('sidebar'))?.hide();
 
     // Cada vez que se entra a una sección se recargan sus datos
     ({
@@ -128,14 +130,15 @@ function llenarSelect(select, items, valor, texto, opcionVacia) {
 }
 
 function filaVacia(colspan, texto) {
-    return `<tr><td colspan="${colspan}" class="vacio">${esc(texto)}</td></tr>`;
+    return `<tr><td colspan="${colspan}" class="text-center text-body-secondary py-4">${esc(texto)}</td></tr>`;
 }
 
+// Botones de acción de cada fila (botones de Bootstrap con íconos de Feather)
 function botonesAccion(id, { editar = true, borrar = true, ver = false } = {}) {
-    return `<div class="action-buttons">
-        ${ver ? `<button class="btn-action view" data-ver="${id}" title="Ver detalle" aria-label="Ver detalle"><i data-feather="eye"></i></button>` : ''}
-        ${editar ? `<button class="btn-action edit" data-editar="${id}" title="Editar" aria-label="Editar"><i data-feather="edit-2"></i></button>` : ''}
-        ${borrar ? `<button class="btn-action delete" data-borrar="${id}" title="Dar de baja" aria-label="Dar de baja"><i data-feather="trash-2"></i></button>` : ''}
+    return `<div class="d-flex justify-content-end gap-1">
+        ${ver ? `<button class="btn btn-outline-secondary btn-sm btn-icono" data-ver="${id}" title="Ver detalle" aria-label="Ver detalle"><i data-feather="eye"></i></button>` : ''}
+        ${editar ? `<button class="btn btn-outline-secondary btn-sm btn-icono" data-editar="${id}" title="Editar" aria-label="Editar"><i data-feather="edit-2"></i></button>` : ''}
+        ${borrar ? `<button class="btn btn-outline-danger btn-sm btn-icono" data-borrar="${id}" title="Dar de baja" aria-label="Dar de baja"><i data-feather="trash-2"></i></button>` : ''}
     </div>`;
 }
 
@@ -269,7 +272,7 @@ async function cargarTop() {
         ? Admin.datosTop.map((r, i) => `
             <tr>
                 <td>${i + 1}</td>
-                <td class="font-bold">${esc(r.titulo)}</td>
+                <td class="fw-semibold">${esc(r.titulo)}</td>
                 <td class="num">${fmtNumero(r.cantidadEntradas)}</td>
                 <td class="num">${fmtMoneda(r.totalRecaudado)}</td>
             </tr>`).join('')
@@ -305,10 +308,11 @@ async function cargarMensual() {
 
 function coloresGrafico() {
     const cs = getComputedStyle(document.documentElement);
+    // Colores tomados de las variables CSS (cambian con el tema claro/oscuro)
     return {
-        primario: cs.getPropertyValue('--clr-primary').trim(),
-        texto: cs.getPropertyValue('--clr-text-muted').trim(),
-        grilla: cs.getPropertyValue('--clr-border').trim(),
+        primario: cs.getPropertyValue('--cine-primary').trim(),
+        texto: cs.getPropertyValue('--bs-secondary-color').trim(),
+        grilla: cs.getPropertyValue('--bs-border-color').trim(),
         fuente: 'Inter, system-ui, sans-serif'
     };
 }
@@ -424,7 +428,7 @@ function renderPeliculas() {
         ? lista.map(p => `
             <tr>
                 <td><div class="table-poster">${posterHTML(p)}</div></td>
-                <td class="font-bold">${esc(p.titulo)}</td>
+                <td class="fw-semibold">${esc(p.titulo)}</td>
                 <td class="num">${p.duracionMinutos ?? '-'} min</td>
                 <td>${badgeClasificacion(p.clasificacionDescripcion)}</td>
                 <td>${botonesAccion(p.idPelicula)}</td>
@@ -574,13 +578,14 @@ function renderFunciones() {
         ? lista.map(f => `
             <tr class="${f.fecha < hoy ? 'fila-pasada' : ''}">
                 <td>${fmtFechaCorta(f.fecha)}</td>
-                <td class="font-bold">${fmtHora(f.horaInicio)}</td>
-                <td>${esc(f.peliculaTitulo)}</td>
+                <td class="fw-semibold">${fmtHora(f.horaInicio)}</td>
+                <td>${esc(f.peliculaTitulo)} ${f.esParaMayores ? `<span class="badge text-bg-danger">${esc(f.clasificacion)}</span>` : ''}
+                    ${f.tieneEntradasVendidas ? '<span class="badge text-bg-success" title="No se puede mover ni cancelar">Con ventas</span>' : ''}</td>
                 <td>${esc(f.salaNombre)}</td>
                 <td>${esc(f.formatoDescripcion ?? '-')}</td>
-                <td>${f.promocionDescripcion ? `<span class="badge badge-primary">${esc(f.promocionDescripcion)}</span>` : '-'}</td>
+                <td>${f.promocionDescripcion ? `<span class="badge text-bg-primary">${esc(f.promocionDescripcion)}</span>` : '-'}</td>
                 <td class="num">${fmtMoneda(f.precioEntrada)}</td>
-                <td>${botonesAccion(f.idFuncion)}</td>
+                <td>${botonesAccion(f.idFuncion, { borrar: !f.tieneEntradasVendidas })}</td>
             </tr>`).join('')
         : filaVacia(8, 'No hay funciones para mostrar.');
     refrescarIconos();
@@ -599,6 +604,16 @@ function abrirFormFuncion(id) {
     $('funcionFecha').value = f?.fecha ?? hoyISO();
     $('funcionFecha').min = f ? '' : hoyISO();
     $('funcionHora').value = f ? fmtHora(f.horaInicio) : '20:00';
+
+    // Regla de negocio (la valida FuncionService): con entradas vendidas no se puede mover la función
+    const bloqueada = !!f?.tieneEntradasVendidas;
+    ['funcionPelicula', 'funcionSala', 'funcionFecha', 'funcionHora'].forEach(c => $(c).disabled = bloqueada);
+    errorForm('errorFuncion', null);
+    if (bloqueada) {
+        $('errorFuncion').textContent = 'Esta función ya tiene entradas vendidas: solo se puede cambiar el formato y la promoción.';
+        $('errorFuncion').hidden = false;
+    }
+
     mostrarFechaLeida();
     abrirModal('modalFuncion');
 }
@@ -674,10 +689,10 @@ function renderSalas() {
     $('tbodySalas').innerHTML = Admin.salas.length
         ? Admin.salas.map(s => `
             <tr>
-                <td class="font-bold">${esc(s.nombre)}</td>
-                <td><span class="badge badge-info">${esc(s.tipoSala ?? 'Sin tipo')}</span></td>
+                <td class="fw-semibold">${esc(s.nombre)}</td>
+                <td><span class="badge text-bg-info">${esc(s.tipoSala ?? 'Sin tipo')}</span></td>
                 <td>${esc(s.complejo ?? '-')}</td>
-                <td class="num">${s.cantidadButacas} <span class="text-muted">(${s.cantidadFilas} filas)</span></td>
+                <td class="num">${s.cantidadButacas} <span class="text-body-secondary">(${s.cantidadFilas} filas)</span></td>
                 <td class="num">${s.cantidadFunciones}</td>
                 <td>${botonesAccion(s.idSala)}</td>
             </tr>`).join('')
@@ -789,25 +804,27 @@ function renderPrecios() {
         const v = precioVigente(t.id);
         const prox = precioProgramado(t.id);
         return `
-            <div class="card metric-card">
-                <div class="metric-icon" style="color: var(--clr-primary); background: rgba(234,179,8,.12);"><i data-feather="tag"></i></div>
-                <div class="metric-info" style="flex:1">
-                    <h3>${esc(t.descripcion)}</h3>
-                    <p class="metric-value">${v ? fmtMoneda(v.precio) : '<span class="badge badge-danger">Sin precio</span>'}</p>
-                    ${prox ? `<span class="form-hint">Desde ${fmtFecha(prox.fechaDesde)}: ${fmtMoneda(prox.precio)}</span>` : ''}
-                </div>
-                <button class="btn-action edit" data-nuevo-precio="${t.id}" title="Cambiar precio" aria-label="Cambiar precio de ${esc(t.descripcion)}"><i data-feather="edit-2"></i></button>
+            <div class="col-sm-6 col-xl-4">
+                <div class="card h-100"><div class="card-body d-flex align-items-center gap-3">
+                    <div class="metric-icon text-primary" style="background: rgba(234,179,8,.12)"><i data-feather="tag"></i></div>
+                    <div class="flex-grow-1">
+                        <div class="small text-body-secondary">${esc(t.descripcion)}</div>
+                        <p class="metric-value">${v ? fmtMoneda(v.precio) : '<span class="badge text-bg-danger fs-6">Sin precio</span>'}</p>
+                        ${prox ? `<div class="form-text m-0">Desde ${fmtFecha(prox.fechaDesde)}: ${fmtMoneda(prox.precio)}</div>` : ''}
+                    </div>
+                    <button class="btn btn-outline-secondary btn-sm btn-icono" data-nuevo-precio="${t.id}" title="Cambiar precio" aria-label="Cambiar precio de ${esc(t.descripcion)}"><i data-feather="edit-2"></i></button>
+                </div></div>
             </div>`;
     }).join('');
 
     const verHistoricos = $('filtroPreciosHistoricos').checked;
     const lista = Admin.precios.filter(p => verHistoricos || p.estado !== 'Histórico');
-    const badge = { 'Vigente': 'badge-success', 'Programado': 'badge-info', 'Histórico': '' };
+    const badge = { 'Vigente': 'text-bg-success', 'Programado': 'text-bg-info', 'Histórico': 'text-bg-secondary' };
 
     $('tbodyPrecios').innerHTML = lista.length
         ? lista.map(p => `
             <tr class="${p.estado === 'Histórico' ? 'fila-pasada' : ''}">
-                <td class="font-bold">${esc(p.tipoSala)}</td>
+                <td class="fw-semibold">${esc(p.tipoSala)}</td>
                 <td class="num">${fmtMoneda(p.precio)}</td>
                 <td>${fmtFecha(p.fechaDesde)}</td>
                 <td>${p.fechaHasta ? fmtFecha(p.fechaHasta) : 'Sin fecha de fin'}</td>
@@ -902,10 +919,10 @@ function renderClientes() {
     $('tbodyClientes').innerHTML = lista.length
         ? lista.map(c => `
             <tr>
-                <td class="font-bold">${esc(c.apellido)}, ${esc(c.nombre)}</td>
+                <td class="fw-semibold">${esc(c.apellido)}, ${esc(c.nombre)}</td>
                 <td>${esc(c.nroDocumento ?? '-')}</td>
                 <td>${fmtFecha(c.fechaNacimiento)}</td>
-                <td>${c.esJubilado ? '<span class="badge badge-info">Sí</span>' : 'No'}</td>
+                <td>${c.esJubilado ? '<span class="badge text-bg-info">Sí</span>' : 'No'}</td>
                 <td>${c.calle ? `${esc(c.calle)} ${c.altura ?? ''}` : '-'}</td>
                 <td>${botonesAccion(c.idCliente)}</td>
             </tr>`).join('')
@@ -995,13 +1012,13 @@ function renderVentas() {
     $('tbodyVentas').innerHTML = lista.length
         ? lista.map(v => `
             <tr>
-                <td class="font-bold">#${v.idVenta}</td>
+                <td class="fw-semibold">#${v.idVenta}</td>
                 <td>${fmtFechaHora(v.fechaHora)}</td>
                 <td>${esc(v.cliente || '-')}</td>
                 <td>${esc(v.canal ?? '-')}</td>
                 <td class="num">${v.cantidadEntradas}</td>
                 <td>${esc(v.formasPago || '-')}</td>
-                <td class="num font-bold">${fmtMoneda(v.total)}</td>
+                <td class="num fw-semibold">${fmtMoneda(v.total)}</td>
                 <td>${botonesAccion(v.idVenta, { editar: false, borrar: false, ver: true })}</td>
             </tr>`).join('')
         : filaVacia(8, q ? 'No hay ventas que coincidan con la búsqueda.' : 'Todavía no hay ventas registradas.');
@@ -1019,14 +1036,15 @@ async function verVenta(id) {
 }
 
 // --- Nueva venta en boletería: maestro (cliente, pago) + detalle (entradas) ---
-const ventaNueva = { funcion: null, seleccion: [], obtenerEntradas: () => [] };
+const entradasVacias = () => ({ entradas: () => [], total: () => 0, detalle: () => [] });
+const ventaNueva = { funcion: null, seleccion: [], entradasUI: entradasVacias() };
 
 async function abrirNuevaVenta() {
     errorForm('errorVenta', null);
-    $('ventaMapa').innerHTML = '<p class="text-muted">Elegí una función para ver las butacas.</p>';
+    $('ventaMapa').innerHTML = '<p class="text-body-secondary">Elegí una función para ver las butacas.</p>';
     $('ventaEntradas').innerHTML = '';
     $('ventaTotal').textContent = fmtMoneda(0);
-    Object.assign(ventaNueva, { funcion: null, seleccion: [], obtenerEntradas: () => [] });
+    Object.assign(ventaNueva, { funcion: null, seleccion: [], entradasUI: entradasVacias() });
     abrirModal('modalVenta');
 
     try {
@@ -1048,11 +1066,12 @@ async function cargarButacasVenta() {
     const id = Number($('ventaFuncion').value);
     ventaNueva.funcion = (Admin.funcionesVenta ?? []).find(f => f.idFuncion === id) ?? null;
     ventaNueva.seleccion = [];
+    ventaNueva.entradasUI = entradasVacias();
     $('ventaEntradas').innerHTML = '';
     actualizarTotalVenta();
 
     if (!ventaNueva.funcion) {
-        $('ventaMapa').innerHTML = '<p class="text-muted">Elegí una función para ver las butacas.</p>';
+        $('ventaMapa').innerHTML = '<p class="text-body-secondary">Elegí una función para ver las butacas.</p>';
         return;
     }
 
@@ -1063,8 +1082,8 @@ async function cargarButacasVenta() {
             max: 10,
             onChange: sel => {
                 ventaNueva.seleccion = sel;
-                ventaNueva.obtenerEntradas = renderDetalleEntradas($('ventaEntradas'), sel,
-                    Admin.catalogos.tiposEspectador, ventaNueva.funcion.precioEntrada, ventaNueva.funcion.idFuncion);
+                // Precio por tipo de espectador calculado por el servidor (promo o 15% jubilado/menor)
+                ventaNueva.entradasUI = renderDetalleEntradas($('ventaEntradas'), sel, ventaNueva.funcion, actualizarTotalVenta);
                 actualizarTotalVenta();
             }
         });
@@ -1074,14 +1093,13 @@ async function cargarButacasVenta() {
 }
 
 function actualizarTotalVenta() {
-    const total = ventaNueva.funcion ? ventaNueva.seleccion.length * ventaNueva.funcion.precioEntrada : 0;
-    $('ventaTotal').textContent = `${fmtMoneda(total)} (${ventaNueva.seleccion.length} entradas)`;
+    $('ventaTotal').textContent = `${fmtMoneda(ventaNueva.entradasUI.total())} (${ventaNueva.seleccion.length} entradas)`;
 }
 
 async function registrarVenta(e) {
     e.preventDefault();
     const idCliente = Number($('ventaCliente').value) || null;
-    const entradas = ventaNueva.obtenerEntradas();
+    const entradas = ventaNueva.entradasUI.entradas();
 
     if (!idCliente) return errorForm('errorVenta', 'Seleccioná el cliente.');
     if (!ventaNueva.funcion) return errorForm('errorVenta', 'Seleccioná la función.');
@@ -1106,7 +1124,7 @@ async function registrarVenta(e) {
             verVenta(resp.idVenta);
         } catch (err) {
             errorForm('errorVenta', err.message);
-            if (/ocupada/i.test(err.message)) cargarButacasVenta();
+            if (/ocupada|acaba de vender/i.test(err.message)) cargarButacasVenta();
         }
     });
 }

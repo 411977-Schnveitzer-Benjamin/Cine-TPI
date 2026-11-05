@@ -8,10 +8,9 @@ const estado = {
     pelicula: null,
     funciones: [],
     funcion: null,
-    tiposEspectador: [],
     formasPago: [],
     seleccion: [],
-    obtenerEntradas: () => []
+    entradasUI: { entradas: () => [], total: () => 0, detalle: () => [] } // lo arma renderDetalleEntradas
 };
 
 document.addEventListener('DOMContentLoaded', iniciarReserva);
@@ -29,13 +28,12 @@ async function iniciarReserva() {
     }
 
     try {
-        const [pelicula, funciones, tipos, formas] = await Promise.all([
+        const [pelicula, funciones, formas] = await Promise.all([
             api(`/pelicula/${idPelicula}`),
             api(`/funcion?idPelicula=${idPelicula}&soloProximas=true`),
-            api('/catalogo/tipos-espectador'),
             api('/catalogo/formas-pago')
         ]);
-        Object.assign(estado, { pelicula, funciones, tiposEspectador: tipos, formasPago: formas });
+        Object.assign(estado, { pelicula, funciones, formasPago: formas });
     } catch (err) {
         info.innerHTML = htmlVacio(err.message);
         return;
@@ -44,17 +42,17 @@ async function iniciarReserva() {
     const p = estado.pelicula;
     document.title = `${p.titulo} - Comprar entradas`;
     info.innerHTML = `
-        ${posterHTML(p)}
+        <div class="reserva-poster rounded overflow-hidden">${posterHTML(p)}</div>
         <div>
-            <h1 class="page-title" style="margin-bottom:.4rem">${esc(p.titulo)}</h1>
-            <div class="movie-meta">${badgeClasificacion(p.clasificacionDescripcion)}<span>${p.duracionMinutos ?? '-'} min</span></div>
+            <h1 class="display-6 fw-bold mb-2">${esc(p.titulo)}</h1>
+            <div class="d-flex align-items-center gap-2 text-body-secondary">${badgeClasificacion(p.clasificacionDescripcion)}<span>${p.duracionMinutos ?? '-'} min</span></div>
         </div>`;
 
     document.getElementById('flujoCompra').hidden = false;
     document.getElementById('formaPago').innerHTML = estado.formasPago
         .map(f => `<option value="${f.id}">${esc(f.descripcion)}</option>`).join('');
-    document.getElementById('formaPago').onchange = renderResumen;
-    document.getElementById('btnConfirmar').onclick = confirmarCompra;
+    document.getElementById('formaPago').addEventListener('change', renderResumen);
+    document.getElementById('btnConfirmar').addEventListener('click', confirmarCompra);
 
     renderFunciones();
 
@@ -76,19 +74,20 @@ function renderFunciones() {
     estado.funciones.forEach(f => (porDia[f.fecha] ??= []).push(f));
 
     cont.innerHTML = Object.entries(porDia).map(([fecha, lista]) => `
-        <div class="funciones-dia">
-            <h3>${fmtFechaLarga(fecha)}</h3>
-            <div class="funciones-lista">
+        <div class="funciones-dia mb-3">
+            <h3 class="h6 text-body-secondary mb-2">${fmtFechaLarga(fecha)}</h3>
+            <div class="d-flex flex-wrap gap-2">
                 ${lista.map(f => `
-                    <button type="button" class="funcion-btn" data-funcion="${f.idFuncion}" aria-pressed="false">
+                    <button type="button" class="btn btn-outline-secondary funcion-btn" data-funcion="${f.idFuncion}" aria-pressed="false">
                         <strong>${fmtHora(f.horaInicio)}</strong>
-                        <small>${esc(f.salaNombre)} · ${esc(f.formatoDescripcion ?? '')}</small>
-                        <small>${fmtMoneda(f.precioEntrada)}${f.promocionDescripcion ? ` · <span class="badge badge-primary">${esc(f.promocionDescripcion)}</span>` : ''}</small>
+                        <small class="d-block text-body-secondary">${esc(f.salaNombre)} · ${esc(f.formatoDescripcion ?? '')}</small>
+                        <small class="d-block">General ${fmtMoneda(f.precioEntrada)}</small>
+                        ${f.promocionDescripcion ? `<span class="badge text-bg-primary mt-1">${esc(f.promocionDescripcion)}</span>` : ''}
                     </button>`).join('')}
             </div>
         </div>`).join('');
 
-    cont.querySelectorAll('.funcion-btn').forEach(b => b.onclick = () => elegirFuncion(Number(b.dataset.funcion)));
+    cont.querySelectorAll('.funcion-btn').forEach(b => b.addEventListener('click', () => elegirFuncion(Number(b.dataset.funcion))));
 }
 
 async function elegirFuncion(idFuncion) {
@@ -97,7 +96,7 @@ async function elegirFuncion(idFuncion) {
 
     document.querySelectorAll('.funcion-btn').forEach(b => {
         const sel = Number(b.dataset.funcion) === idFuncion;
-        b.classList.toggle('selected', sel);
+        b.classList.toggle('active', sel);
         b.setAttribute('aria-pressed', sel);
     });
 
@@ -129,8 +128,8 @@ async function cargarMapa() {
 /* ---------- Paso 2 ---------- */
 function onSeleccionCambiada() {
     const detalle = document.getElementById('entradasDetalle');
-    estado.obtenerEntradas = renderDetalleEntradas(detalle, estado.seleccion, estado.tiposEspectador,
-        estado.funcion.precioEntrada, estado.funcion.idFuncion);
+    // Cada entrada elige su tipo (General / Jubilado / Menor); el precio de cada uno viene del servidor
+    estado.entradasUI = renderDetalleEntradas(detalle, estado.seleccion, estado.funcion, renderResumen);
 
     document.getElementById('step3').hidden = estado.seleccion.length === 0;
     actualizarPaso3();
@@ -154,18 +153,26 @@ function actualizarPaso3() {
 
 function renderResumen() {
     if (!estado.funcion) return;
-    const cant = estado.seleccion.length;
-    const precio = estado.funcion.precioEntrada;
     const forma = estado.formasPago.find(f => f.id === Number(document.getElementById('formaPago').value));
 
+    // Agrupamos las entradas por tipo: "2 x General $4.000", "1 x Jubilado $3.400"
+    const grupos = {};
+    estado.entradasUI.detalle().forEach(d => {
+        const g = (grupos[d.tipo] ??= { cant: 0, precio: d.precio });
+        g.cant++;
+    });
+    // Cada línea es un item de una "list-group" de Bootstrap
+    const fila = (izq, der) => `<li class="list-group-item d-flex justify-content-between gap-3"><span>${izq}</span><span class="text-end">${der}</span></li>`;
+    const lineas = Object.entries(grupos).map(([tipo, g]) => fila(`${g.cant} x ${esc(tipo)}`, `${fmtMoneda(g.precio)} c/u`)).join('');
+
     document.getElementById('resumen').innerHTML = `
-        <div class="resumen-fila"><span>Película</span><strong>${esc(estado.pelicula.titulo)}</strong></div>
-        <div class="resumen-fila"><span>Función</span><span>${fmtFechaCorta(estado.funcion.fecha)} ${fmtHora(estado.funcion.horaInicio)} · ${esc(estado.funcion.salaNombre)}</span></div>
-        <div class="resumen-fila"><span>Butacas</span><span>${estado.seleccion.map(b => esc(b.fila) + b.numero).join(', ') || '-'}</span></div>
-        <div class="resumen-fila"><span>Entradas</span><span>${cant} x ${fmtMoneda(precio)}</span></div>
-        ${estado.funcion.promocionDescripcion ? `<div class="resumen-fila"><span>Promoción</span><span>${esc(estado.funcion.promocionDescripcion)} (-${Number(estado.funcion.porcentajeDescuento)}%)</span></div>` : ''}
-        <div class="resumen-fila"><span>Forma de pago</span><span>${esc(forma?.descripcion ?? '-')}</span></div>
-        <div class="resumen-fila resumen-total"><span>Total</span><span>${fmtMoneda(cant * precio)}</span></div>`;
+        ${fila('Película', `<strong>${esc(estado.pelicula.titulo)}</strong>`)}
+        ${fila('Función', `${fmtFechaCorta(estado.funcion.fecha)} ${fmtHora(estado.funcion.horaInicio)} · ${esc(estado.funcion.salaNombre)}`)}
+        ${fila('Butacas', estado.seleccion.map(b => esc(b.fila) + b.numero).join(', ') || '-')}
+        ${lineas}
+        ${estado.funcion.promocionDescripcion ? fila('Promoción', `${esc(estado.funcion.promocionDescripcion)} (-${Number(estado.funcion.porcentajeDescuento)}%)`) : ''}
+        ${fila('Forma de pago', esc(forma?.descripcion ?? '-'))}
+        <li class="list-group-item d-flex justify-content-between fs-4 fw-bold text-primary"><span>Total</span><span>${fmtMoneda(estado.entradasUI.total())}</span></li>`;
 }
 
 async function confirmarCompra() {
@@ -174,7 +181,7 @@ async function confirmarCompra() {
         return;
     }
 
-    const entradas = estado.obtenerEntradas();
+    const entradas = estado.entradasUI.entradas();
     if (!entradas.length) return toast('Elegí al menos una butaca.', 'warning');
 
     const btn = document.getElementById('btnConfirmar');
@@ -194,7 +201,7 @@ async function confirmarCompra() {
     } catch (err) {
         toast(err.message, 'error', 6000);
         // Si alguien ganó la butaca, refrescamos el mapa
-        if (/ocupada/i.test(err.message)) {
+        if (/ocupada|acaba de vender/i.test(err.message)) {
             estado.seleccion = [];
             await cargarMapa();
         }
@@ -215,12 +222,14 @@ async function mostrarComprobante(idVenta) {
     } catch { /* si falla el detalle igual mostramos el ok */ }
 
     comp.innerHTML = `
-        <div class="comprobante-icono"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></div>
-        <h2>¡Compra confirmada!</h2>
-        <p class="text-muted">Número de operación <strong>#${idVenta}</strong>. Presentá este número en la boletería.</p>
-        <div style="text-align:left">${detalle}</div>
-        <div style="display:flex;gap:.75rem;justify-content:center;margin-top:1.5rem;flex-wrap:wrap">
-            <a class="btn btn-outline" href="cartelera.html">Volver a la cartelera</a>
-            <a class="btn btn-primary" href="index.html">Ir al inicio</a>
+        <div class="card-body p-4">
+            <div class="comprobante-icono mb-3"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <h2>¡Compra confirmada!</h2>
+            <p class="text-body-secondary">Número de operación <strong>#${idVenta}</strong>. Presentá este número en la boletería.</p>
+            <div class="text-start">${detalle}</div>
+            <div class="d-flex flex-wrap justify-content-center gap-2 mt-4">
+                <a class="btn btn-outline-secondary" href="cartelera.html">Volver a la cartelera</a>
+                <a class="btn btn-primary" href="index.html">Ir al inicio</a>
+            </div>
         </div>`;
 }

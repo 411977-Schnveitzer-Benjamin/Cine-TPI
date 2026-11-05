@@ -14,17 +14,18 @@ namespace CineHollywoodTPI.Data.Repositories
             _context = context;
         }
 
-        // Query base con todo lo necesario para mostrar la función y calcular su precio
+        // Query base con todo lo necesario para mostrar la función, calcular su precio
+        // y validar la clasificación de la película
         private IQueryable<Funcion> QueryCompleta() =>
             _context.Funcion
-                .Include(f => f.IdPeliculaNavigation)
+                .Include(f => f.IdPeliculaNavigation!)
+                    .ThenInclude(p => p.IdClasificacionNavigation)
                 .Include(f => f.IdFormatoNavigation)
                 .Include(f => f.IdPromocionNavigation)
-                .Include(f => f.IdSalaNavigation)
-                    .ThenInclude(s => s!.IdTipoSalaNavigation)
-                        .ThenInclude(t => t!.PrecioTipoSalas);
+                .Include(f => f.IdSalaNavigation!)
+                    .ThenInclude(s => s.IdTipoSalaNavigation!)
+                        .ThenInclude(t => t.PrecioTipoSalas);
 
-        // 1. Funciones activas (opcional: de una película y/o desde una fecha)
         public async Task<IEnumerable<Funcion>> GetAllActiveAsync(int? idPelicula = null, DateOnly? desde = null)
         {
             var query = QueryCompleta().Where(f => f.Activo);
@@ -42,7 +43,6 @@ namespace CineHollywoodTPI.Data.Repositories
                 .ToListAsync();
         }
 
-        // 2. Buscar una función específica por su ID
         public async Task<Funcion?> GetByIdAsync(int id)
         {
             return await QueryCompleta()
@@ -50,7 +50,6 @@ namespace CineHollywoodTPI.Data.Repositories
                 .FirstOrDefaultAsync(f => f.IdFuncion == id);
         }
 
-        // 3. Butacas de la sala de la función, marcando cuáles ya están vendidas
         public async Task<IEnumerable<ButacaEstadoDTO>> GetButacasAsync(int idFuncion)
         {
             var funcion = await _context.Funcion.FindAsync(idFuncion);
@@ -74,41 +73,36 @@ namespace CineHollywoodTPI.Data.Repositories
                 Numero = b.Numero,
                 Habilitada = b.Habilitada ?? true,
                 Ocupada = ocupadas.Contains(b.IdButaca)
-            });
+            }).ToList();
         }
 
-        // 4. Valida que no haya otra función activa en la misma sala que se pise en horario
-        public async Task<bool> ExisteSuperposicionAsync(Funcion funcion)
+        public async Task<IEnumerable<Funcion>> GetActivasDeSalaEnFechaAsync(int idSala, DateOnly fecha, int? excluirIdFuncion)
         {
-            if (funcion.Fecha == null || funcion.HoraInicio == null || funcion.IdSala == null)
-                return false;
-
-            var duracionNueva = await _context.Pelicula
-                .Where(p => p.IdPelicula == funcion.IdPelicula)
-                .Select(p => p.DuracionMinutos)
-                .FirstOrDefaultAsync() ?? 120;
-
-            var otras = await _context.Funcion
+            return await _context.Funcion
                 .Include(f => f.IdPeliculaNavigation)
                 .Where(f => f.Activo &&
-                            f.IdFuncion != funcion.IdFuncion &&
-                            f.IdSala == funcion.IdSala &&
-                            f.Fecha == funcion.Fecha)
+                            f.IdSala == idSala &&
+                            f.Fecha == fecha &&
+                            (excluirIdFuncion == null || f.IdFuncion != excluirIdFuncion))
                 .ToListAsync();
-
-            var inicioNueva = funcion.Fecha.Value.ToDateTime(funcion.HoraInicio.Value);
-            var finNueva = inicioNueva.AddMinutes(duracionNueva);
-
-            return otras.Any(o =>
-            {
-                if (o.HoraInicio == null) return false;
-                var inicio = o.Fecha!.Value.ToDateTime(o.HoraInicio.Value);
-                var fin = inicio.AddMinutes(o.IdPeliculaNavigation?.DuracionMinutos ?? 120);
-                return inicioNueva < fin && inicio < finNueva;
-            });
         }
 
-        // 5. Agregar una nueva función a la grilla
+        public async Task<bool> TieneEntradasVendidasAsync(int idFuncion)
+        {
+            return await _context.Entrada.AnyAsync(e => e.IdFuncion == idFuncion);
+        }
+
+        public async Task<HashSet<int>> GetIdsConEntradasVendidasAsync(IEnumerable<int> idsFuncion)
+        {
+            var ids = idsFuncion.ToList();
+            var conVentas = await _context.Entrada
+                .Where(e => e.IdFuncion != null && ids.Contains(e.IdFuncion.Value))
+                .Select(e => e.IdFuncion!.Value)
+                .Distinct()
+                .ToListAsync();
+            return conVentas.ToHashSet();
+        }
+
         public async Task<bool> AddAsync(Funcion funcion)
         {
             funcion.Activo = true;
@@ -116,7 +110,6 @@ namespace CineHollywoodTPI.Data.Repositories
             return await _context.SaveChangesAsync() > 0;
         }
 
-        // 6. Modificar horarios o salas de una función
         public async Task<bool> UpdateAsync(Funcion funcion)
         {
             // Si la entidad ya viene trackeada (la trajimos con GetByIdAsync) alcanza con guardar.
@@ -127,7 +120,6 @@ namespace CineHollywoodTPI.Data.Repositories
             return true;
         }
 
-        // 7. Borrado lógico de la función (por ejemplo, si se cancela)
         public async Task<bool> DeleteLogicoAsync(int id)
         {
             var funcion = await _context.Funcion.FindAsync(id);

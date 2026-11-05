@@ -2,10 +2,11 @@
 
 Sistema web para un cine: cartelera pública, compra de entradas online eligiendo butaca, y un panel de administración con ABM de películas, funciones, salas, precios y clientes, ventas en boletería y reportes.
 
-- **Backend:** ASP.NET Core 8 Web API + Entity Framework Core (SQL Server)
-- **Frontend:** HTML + CSS + JavaScript puro (sin frameworks), servido por un proyecto ASP.NET aparte
+- **Backend:** ASP.NET Core 8 Web API + Entity Framework Core (SQL Server), arquitectura en capas Controller → Service → Repository
+- **Frontend:** HTML + CSS + JavaScript (sin frameworks de JS) con **Bootstrap 5.3** para el diseño responsivo, servido por un proyecto ASP.NET aparte
 - **Seguridad:** login con **JWT** y roles (`Administrador` / `Cliente`)
-- **Librerías del front (por CDN):** [Chart.js](https://www.chartjs.org/) (gráficos), [SweetAlert2](https://sweetalert2.github.io/) (alertas), [Feather Icons](https://feathericons.com/) (íconos del panel)
+- **Librerías del front (por CDN):** [Bootstrap 5.3](https://getbootstrap.com/) (diseño responsivo, componentes), [Chart.js](https://www.chartjs.org/) (gráficos), [SweetAlert2](https://sweetalert2.github.io/) (alertas), [Feather Icons](https://feathericons.com/) (íconos del panel)
+- **Testing de la API:** colección de **Postman** en `postman/` (60 requests con tests)
 
 ---
 
@@ -16,14 +17,16 @@ Sistema web para un cine: cartelera pública, compra de entradas online eligiend
 3. [Estructura de carpetas](#3-estructura-de-carpetas)
 4. [Base de datos y modelo](#4-base-de-datos-y-modelo)
 5. [Proyecto Data (repositorios y DTOs)](#5-proyecto-data-repositorios-y-dtos)
-6. [Proyecto API (controladores y servicios)](#6-proyecto-api-controladores-y-servicios)
+6. [Proyecto API (controladores, servicios y middleware)](#6-proyecto-api-controladores-servicios-y-middleware)
 7. [Autenticación con JWT](#7-autenticación-con-jwt)
 8. [Lista completa de endpoints](#8-lista-completa-de-endpoints)
 9. [Reglas de negocio importantes](#9-reglas-de-negocio-importantes)
 10. [Frontend (proyecto Web)](#10-frontend-proyecto-web)
 11. [Flujos completos paso a paso](#11-flujos-completos-paso-a-paso)
-12. [Problemas comunes](#12-problemas-comunes)
-13. [Cómo agregar algo nuevo](#13-cómo-agregar-algo-nuevo)
+12. [Probar la API con Postman](#12-probar-la-api-con-postman)
+13. [Temas de la materia: dónde está cada uno](#13-temas-de-la-materia-dónde-está-cada-uno)
+14. [Problemas comunes](#14-problemas-comunes)
+15. [Cómo agregar algo nuevo](#15-cómo-agregar-algo-nuevo)
 
 ---
 
@@ -73,34 +76,56 @@ Se puede cambiar en `appsettings.json` → `AdminInicial`. Los clientes se regis
 ## 2. Arquitectura general
 
 ```
-┌──────────────────────────────┐      fetch + JWT       ┌───────────────────────────────┐
-│  CineHollywoodTPI.Web        │ ─────────────────────▶ │  CineHollywoodTPI.API         │
-│  (puerto 5020)               │ ◀───────────────────── │  (puerto 5191)                │
-│  HTML / CSS / JS estáticos   │        JSON            │  Controllers + Services       │
-└──────────────────────────────┘                        └──────────────┬────────────────┘
-                                                                       │ usa
-                                                        ┌──────────────▼────────────────┐
-                                                        │  CineHollywoodTPI.Data        │
-                                                        │  Models (EF Core) + DTOs      │
-                                                        │  Interfaces + Repositories    │
-                                                        └──────────────┬────────────────┘
-                                                                       │ EF Core
-                                                        ┌──────────────▼────────────────┐
-                                                        │  SQL Server                   │
-                                                        │  SistemaCineBdFinal           │
-                                                        └───────────────────────────────┘
+┌───────────────────────────┐   fetch + JWT   ┌─────────────────────────────────────────────┐
+│  CineHollywoodTPI.Web     │ ──────────────▶ │  CineHollywoodTPI.API  (puerto 5191)        │
+│  (puerto 5020)            │ ◀────────────── │                                             │
+│  HTML / CSS / JS          │      JSON       │  Controllers   → solo HTTP                  │
+└───────────────────────────┘                 │      │                                      │
+                                              │      ▼                                      │
+                                              │  Services      → REGLAS DE NEGOCIO          │
+                                              │      │           (validaciones, descuentos) │
+                                              └──────┼──────────────────────────────────────┘
+                                                     ▼
+                                              ┌─────────────────────────────────────────────┐
+                                              │  CineHollywoodTPI.Data                      │
+                                              │  Repositories  → solo acceso a datos (EF)   │
+                                              │  Models + DTOs + Interfaces                 │
+                                              └──────┬──────────────────────────────────────┘
+                                                     ▼  EF Core
+                                              ┌─────────────────────────────────────────────┐
+                                              │  SQL Server — SistemaCineBdFinal            │
+                                              └─────────────────────────────────────────────┘
 ```
 
-**Patrón Repositorio en 3 capas:**
+### Arquitectura en capas: cada una tiene **una sola responsabilidad**
 
-1. El **frontend** (JS) llama a un endpoint de la API con `fetch`.
-2. El **controlador** valida los datos de entrada, revisa permisos (JWT/rol) y llama al repositorio.
-3. El **repositorio** habla con la base usando Entity Framework Core (consultas LINQ, transacciones).
-4. El controlador convierte el resultado a un **DTO** (objeto liviano) y lo devuelve como JSON.
+| Capa | Dónde | Qué hace | Qué **no** hace |
+|---|---|---|---|
+| **Controller** | `CineHollywoodTPI/Controllers` | Recibe el pedido HTTP, revisa permisos (`[Authorize]`), llama al servicio y devuelve `Ok(...)` | No tiene `if` de negocio ni `try/catch` |
+| **Service** | `CineHollywoodTPI/Services` | **Todas las reglas de negocio**: validaciones, descuentos, permisos de negocio, cálculo de precios, armado de DTOs | No escribe SQL ni usa el `DbContext` |
+| **Repository** | `CineHollywoodTPI.Data/Repositories` | Consultas y guardado con Entity Framework (incluidas las transacciones) | No decide reglas de negocio |
+| **Middleware** | `CineHollywoodTPI/Middleware` | Convierte las excepciones de los servicios en respuestas HTTP (400, 404, 409…) | — |
 
-¿Por qué DTOs? Los modelos de EF tienen navegaciones circulares (Venta → Entrada → Venta…) y campos que el navegador no necesita. Los DTOs devuelven solo lo justo y evitan errores de serialización.
+Ejemplo, **vender entradas**:
 
-¿Por qué interfaces (`IPeliculaRepository`, etc.)? Porque se registran con **inyección de dependencias** en `Program.cs` (`AddScoped<IPeliculaRepository, PeliculaRepository>()`). El controlador recibe la interfaz en el constructor y no le importa cómo está implementada.
+```
+VentaController.RegistrarVenta(dto)
+   └─▶ VentaService.RegistrarAsync(dto, usuario)
+         ├─ ¿la función existe y no empezó?           (FuncionService.YaEmpezo)
+         ├─ ¿la butaca es de la sala y está libre?     (FuncionRepository.GetButacasAsync)
+         ├─ ¿película +18 y entrada de Menor?          → NegocioException("...") → 400
+         ├─ precio de cada entrada (promo o -15%)      (PrecioService.PrecioEntrada)
+         └─▶ VentaRepository.RegistrarVentaAsync(...)  → transacción VENTA + ENTRADAs + pago
+```
+
+**¿Por qué así?**
+- Si mañana cambia una regla (por ejemplo, el descuento pasa a 20%), se toca **un solo lugar**: el servicio (o `appsettings.json`).
+- Los servicios se reutilizan entre sí: `VentaService` usa las reglas de `FuncionService` y el cálculo de `PrecioService`, en lugar de repetirlos.
+- Los controllers quedan de 1 o 2 líneas por endpoint y son fáciles de leer.
+
+**¿Por qué DTOs?** Los modelos de EF tienen navegaciones circulares (Venta → Entrada → Venta…) y campos que el navegador no necesita. Los DTOs devuelven solo lo justo y evitan errores de serialización.
+
+**¿Por qué interfaces (`IVentaService`, `IVentaRepository`…)?** Porque se registran con **inyección de dependencias** en `Program.cs` (`AddScoped<IVentaService, VentaService>()`). Cada capa recibe la interfaz de la capa de abajo en el constructor y no le importa cómo está implementada.
 
 ---
 
@@ -110,30 +135,45 @@ Se puede cambiar en `appsettings.json` → `AdminInicial`. Los clientes se regis
 CineHollywoodTPI.slnx                  ← la solución (3 proyectos)
 │
 ├── CineHollywoodTPI/                  ← PROYECTO API
-│   ├── Program.cs                     ← configuración: BD, DI, JWT, CORS, Swagger, admin inicial
-│   ├── appsettings.json               ← conexión a la BD, clave JWT, admin inicial
-│   ├── Controllers/
+│   ├── Program.cs                     ← configuración: BD, DI, JWT, CORS, Swagger, middleware, admin inicial
+│   ├── appsettings.json               ← conexión a la BD, clave JWT, REGLAS DE NEGOCIO, admin inicial
+│   ├── Controllers/                   ← CAPA HTTP (finitos, sin lógica)
 │   │   ├── AuthController.cs          ← login / registro (JWT)
-│   │   ├── PeliculaController.cs      ← ABM películas + subida de pósters
+│   │   ├── PeliculaController.cs      ← ABM películas + pósters
 │   │   ├── FuncionController.cs       ← ABM funciones + mapa de butacas
-│   │   ├── SalaController.cs          ← ABM salas (genera butacas)
+│   │   ├── SalaController.cs          ← ABM salas
 │   │   ├── PrecioController.cs        ← precios por tipo de sala
 │   │   ├── ClienteController.cs       ← ABM clientes
-│   │   ├── VentaController.cs         ← ventas (transacción maestro-detalle)
+│   │   ├── VentaController.cs         ← ventas
 │   │   ├── ReporteController.cs       ← reportes del dashboard
 │   │   └── CatalogoController.cs      ← listas para los <select>
-│   ├── Services/
-│   │   ├── TokenService.cs            ← arma y firma el JWT
-│   │   └── PosterService.cs           ← guarda/descarga imágenes de pósters
+│   ├── Services/                      ← CAPA DE NEGOCIO
+│   │   ├── Interfaces/                ← IPeliculaService, IVentaService, ...
+│   │   ├── PeliculaService.cs         ← reglas de películas y pósters
+│   │   ├── FuncionService.cs          ← reglas de funciones (fecha, superposición, funciones con ventas)
+│   │   ├── SalaService.cs             ← reglas de salas y generación de butacas
+│   │   ├── PrecioService.cs           ← ABM de precios + CÁLCULO del precio de cada entrada (promo / -15%)
+│   │   ├── ClienteService.cs          ← reglas de clientes (DNI, fechas)
+│   │   ├── VentaService.cs            ← reglas de la venta (butacas, +18, función empezada, pagos)
+│   │   ├── AuthService.cs             ← login, registro, admin inicial
+│   │   ├── ReporteService.cs          ← validación de filtros de reportes
+│   │   ├── CatalogoService.cs         ← catálogos (sin reglas, mantiene la arquitectura pareja)
+│   │   ├── Excepciones.cs             ← NegocioException, NoEncontradoException, ConflictoException...
+│   │   ├── ReglasNegocioOptions.cs    ← parámetros de las reglas (se leen de appsettings.json)
+│   │   ├── UsuarioActual.cs           ← quién hace el pedido (sale del token)
+│   │   ├── TokenService.cs            ← (infraestructura) arma y firma el JWT
+│   │   └── PosterService.cs           ← (infraestructura) guarda/descarga imágenes
+│   ├── Middleware/
+│   │   └── ManejoErroresMiddleware.cs ← excepción de negocio → respuesta HTTP 400/401/403/404/409
 │   └── wwwroot/posters/               ← acá se guardan los pósters subidos
 │
-├── CineHollywoodTPI.Data/             ← PROYECTO DE DATOS (biblioteca de clases)
+├── CineHollywoodTPI.Data/             ← CAPA DE DATOS (biblioteca de clases)
 │   ├── Models/                        ← entidades generadas por scaffold de EF + SistemaCineContext
 │   │   ├── SistemaCineContext.Partial.cs ← mapeo extra (PosterUrl) sin tocar el scaffold
 │   │   └── Pelicula.Partial.cs           ← propiedad PosterUrl
 │   ├── DTOs/                          ← objetos que viajan como JSON
 │   ├── Interfaces/                    ← contratos de los repositorios
-│   └── Repositories/                  ← implementación con EF Core (+ PrecioHelper)
+│   └── Repositories/                  ← acceso a datos con EF Core (sin reglas de negocio)
 │
 └── CineHollywoodTPI.Web/              ← PROYECTO WEB (solo sirve archivos estáticos)
     ├── Program.cs                     ← UseDefaultFiles + UseStaticFiles
@@ -162,6 +202,7 @@ CineHollywoodTPI.slnx                  ← la solución (3 proyectos)
 |---|---|
 | `SistemaCineBdFinal_actual.sql` | ✅ Script de la base **actual** (estructura + datos). Es el que hay que usar |
 | `SistemaCineBdFinal.sql` | Script viejo, desactualizado (ver sección 1) |
+| `postman/CineHollywood.postman_collection.json` | Colección de Postman para probar la API (ver [sección 12](#12-probar-la-api-con-postman)) |
 
 ---
 
@@ -186,7 +227,8 @@ Los modelos de `CineHollywoodTPI.Data/Models` se generaron con **scaffold** de E
 | `VENTA` | **Maestro** de la venta: cliente, canal, fecha |
 | `ENTRADA` | **Detalle** de la venta: función, butaca, tipo de espectador, precio final |
 | `VentaxFormaPago` | Cómo se pagó la venta (puede haber más de una forma) |
-| `TIPO_ESPECTADOR`, `FORMA_PAGO`, `CANAL_VENTA`, `COMPLEJO` | Tablas de referencia |
+| `TIPO_ESPECTADOR` | General / **Jubilado** / **Menor** (Jubilado y Menor tienen descuento; Menor no puede ver +18) |
+| `FORMA_PAGO`, `CANAL_VENTA`, `COMPLEJO` | Tablas de referencia |
 
 Las tablas de confitería, membresías, empleados, reservas, etc. existen en la base pero **no se usan** en esta versión.
 
@@ -204,38 +246,41 @@ USUARIO *──1 ROL_USUARIO
 
 ## 5. Proyecto Data (repositorios y DTOs)
 
-### Repositorios
+### Repositorios (solo acceso a datos)
+Los repositorios **no tienen reglas de negocio**: solo consultan y guardan. Las decisiones las toman los servicios.
 
 | Repositorio | Qué hace |
 |---|---|
-| `PeliculaRepository` | Listado de activas, búsqueda por nombre, **cartelera** (activas con funciones desde hoy), **estrenos** (activas sin funciones), alta, modificación, baja lógica |
-| `FuncionRepository` | Funciones activas (filtro por película y "desde hoy"), **mapa de butacas** de una función (libre/ocupada), validación de **superposición de horarios** en la misma sala, ABM |
-| `SalaRepository` | ABM de salas. Al crear una sala **genera las butacas** (filas A…Z × números). No deja cambiar la cantidad de butacas si ya hay entradas vendidas; no deja borrar una sala con funciones |
-| `PrecioRepository` | Lista de precios con estado (Vigente / Programado / Histórico), alta de precio nuevo (cierra el anterior), baja de precios futuros |
-| `ClienteRepository` | ABM de clientes (crea PERSONA + CLIENTE juntos), control de DNI repetido |
-| `VentaRepository` | Listado y detalle de ventas, totales, y la **transacción de venta** (ver [sección 9](#9-reglas-de-negocio-importantes)) |
+| `PeliculaRepository` | Activas, búsqueda por nombre, cartelera (con funciones desde una fecha), estrenos (sin funciones), alta, modificación, baja lógica |
+| `FuncionRepository` | Funciones activas (con película, clasificación, sala, precios y promo), **mapa de butacas** (libre/ocupada), funciones de una sala en una fecha, si tiene entradas vendidas, ABM |
+| `SalaRepository` | Salas con sus datos, existencia de tipo/complejo/nombre, si tiene butacas usadas o funciones, alta (con butacas), modificación, eliminación |
+| `PrecioRepository` | Precios por tipo de sala; alta y baja en transacción |
+| `ClienteRepository` | ABM de clientes (PERSONA + CLIENTE), si existe un DNI |
+| `VentaRepository` | Listado, detalle y totales de ventas, y la **transacción de venta** (ver [sección 9](#9-reglas-de-negocio-importantes)) |
 | `ReporteRepository` | Películas más vendidas y ventas mes a mes |
-| `UsuarioRepository` | Buscar usuario por email (login), registro de clientes, creación del admin inicial |
+| `UsuarioRepository` | Usuario por email, persona por DNI, roles, alta de usuario en transacción |
 | `CatalogoRepository` | Listas cortas para combos: clasificaciones, formatos, salas, tipos de sala, tipos de espectador, formas de pago, canales, promociones |
-| `PrecioHelper` (clase estática) | Calcula el precio de la entrada de una función (ver abajo) |
 
-### Cálculo del precio (`PrecioHelper.CalcularPrecioEntrada`)
+### Cálculo del precio (`PrecioService`)
 
 ```
-precio = precio vigente del TIPO DE SALA para la FECHA de la función
-         × (1 − % de descuento de la PROMOCIÓN de la función)
+precio base = precio vigente del TIPO DE SALA para la FECHA de la función (PRECIO_TIPO_SALA)
+
+si la función tiene PROMOCIÓN        → precio = base × (1 − % promo)      (para todos)
+si no, y la entrada es Jubilado/Menor → precio = base × (1 − 15%)
+si no                                 → precio = base
 ```
 
-- Se busca en `PRECIO_TIPO_SALA` el registro cuya vigencia incluye la fecha de la función.
-- Si no hay ninguno, se usa el más reciente cargado. Si no hay precios para ese tipo de sala, el precio es $0 (por eso el panel avisa "Sin precio").
-- **El precio siempre lo calcula el servidor**, nunca se confía en lo que manda el navegador.
+- La promoción y el 15% **no se acumulan**: si la función tiene promo, se aplica solo la promo.
+- Si no hay precio para la fecha se usa el más reciente cargado; si el tipo de sala no tiene precios, es $0 (el panel avisa "Sin precio").
+- **El precio siempre lo calcula el servidor**. Cada función viene con su lista `precios` (uno por tipo de espectador) para que el front los muestre.
 
 ### DTOs principales
 
 | Archivo | Contenido |
 |---|---|
 | `PeliculaDTO`, `PeliculaInsertDTO`, `PeliculaUpdateDTO` (+ `PosterUrlDTO`) | Datos de película |
-| `FuncionDTO`, `FuncionInsertDTO`, `FuncionUpdateDTO` | La DTO de lectura trae además título, sala, tipo de sala, formato, promoción y **precio calculado** |
+| `FuncionDTO`, `FuncionInsertDTO`, `FuncionUpdateDTO` | La DTO de lectura trae además título, clasificación, sala, formato, promoción, si tiene ventas y los **precios por tipo de espectador** (`PrecioPorTipoDTO`) |
 | `ClienteDTO`, `ClienteInsertDTO`, `ClienteUpdateDTO` | Datos de cliente + persona |
 | `VentaCompletaDTO` | Lo que manda el front para vender: cliente, entradas (función + butaca + tipo espectador), formas de pago |
 | `VentaConsultaDTOs` | `VentaListadoDTO` (fila de la tabla) y `VentaDetalleDTO` (con la lista de entradas) |
@@ -250,41 +295,89 @@ La columna `PosterUrl` existía en la tabla `PELICULA` pero el scaffold no la ma
 
 ---
 
-## 6. Proyecto API (controladores y servicios)
+## 6. Proyecto API (controladores, servicios y middleware)
 
 ### `Program.cs` (en orden)
 1. **CORS** `PermitirTodo`: deja que el sitio (puerto 5020) llame a la API (puerto 5191).
 2. **DbContext** con la cadena `DefaultConnection`.
-3. **Inyección de dependencias**: todos los repositorios, `TokenService`, `PosterService`, `PasswordHasher<Usuario>` y un `HttpClient` llamado `"posters"`.
+3. **Inyección de dependencias**, en tres grupos: **repositorios** (datos), **servicios** (negocio) e infraestructura (`TokenService`, `PosterService`, `PasswordHasher`, `HttpClient`). También se cargan las `ReglasNegocioOptions` desde `appsettings.json`.
 4. **Autenticación JWT**: valida emisor, audiencia, vencimiento y firma con la clave de `appsettings.json`.
 5. **Controllers + Swagger** con botón *Authorize* para pegar el token.
-6. **Admin inicial**: si no existe ningún usuario con rol Administrador, lo crea.
-7. Middleware: `UseStaticFiles` (pósters) → `UseCors` → `UseAuthentication` → `UseAuthorization` → `MapControllers`.
+6. **Admin inicial** (`AuthService.CrearAdminInicialAsync`): si no existe ningún usuario Administrador, lo crea.
+7. Pipeline: `UseStaticFiles` (pósters) → `UseCors` → **`ManejoErroresMiddleware`** → `UseAuthentication` → `UseAuthorization` → `MapControllers`.
 
 > En desarrollo **no** se usa `UseHttpsRedirection` porque el front llama por HTTP y la redirección rompe CORS.
 
-### Patrón de los controladores
-Todos siguen la misma forma:
+### Cómo es un controller
+Solo HTTP, una o dos líneas por endpoint:
 
 ```csharp
-[HttpPost]
-[Authorize(Roles = "Administrador")]        // solo admin
-public async Task<IActionResult> Crear([FromBody] XInsertDTO dto)
+[Authorize(Roles = "Administrador")]
+[HttpPut("{id:int}")]
+public async Task<IActionResult> Modificar(int id, [FromBody] FuncionUpdateDTO dto)
 {
-    try
-    {
-        // 1. validar → BadRequest("mensaje claro")
-        // 2. llamar al repositorio
-        // 3. devolver Ok(new { mensaje = "...", id })
-    }
-    catch (InvalidOperationException ex) { return BadRequest(ex.Message); } // error de negocio
-    catch (Exception ex) { return StatusCode(500, $"Error interno: {ex.Message}"); }
+    await _funcionService.ModificarAsync(id, dto);          // las reglas están en el servicio
+    return Ok(new { mensaje = "Función modificada con éxito!" });
 }
 ```
 
-Los repositorios lanzan `InvalidOperationException` con un mensaje en español cuando una regla de negocio no se cumple (butaca ocupada, sala con ventas, etc.). El controlador la convierte en un **400** y el front muestra ese mismo mensaje.
+### Cómo es un servicio
+Valida y, si algo no se cumple, **lanza una excepción de negocio** con un mensaje claro:
 
-### Servicios
+```csharp
+public async Task ModificarAsync(int id, FuncionUpdateDTO dto)
+{
+    var funcion = await _funcionRepository.GetByIdAsync(id)
+        ?? throw new NoEncontradoException($"No existe la función con ID {id}.");   // → 404
+
+    if (await _funcionRepository.TieneEntradasVendidasAsync(id) && cambiaFechaOHora)
+        throw new NegocioException("La función ya tiene entradas vendidas...");      // → 400
+    ...
+    await _funcionRepository.UpdateAsync(funcion);
+}
+```
+
+### Excepciones y middleware (`Services/Excepciones.cs` + `Middleware/ManejoErroresMiddleware.cs`)
+El middleware atrapa las excepciones y responde con el código HTTP y el mensaje, que el front muestra tal cual. Por eso **ningún controller tiene `try/catch`**.
+
+| Excepción | HTTP | Cuándo |
+|---|---|---|
+| `NegocioException` | 400 | No se cumple una regla (datos inválidos, función con ventas, +18…) |
+| `NoAutorizadoException` | 401 | Email o contraseña incorrectos |
+| `AccesoDenegadoException` | 403 | Un cliente quiere ver una compra que no es suya |
+| `NoEncontradoException` | 404 | No existe lo pedido |
+| `ConflictoException` | 409 | Choca con algo existente (DNI/email repetido, butaca ocupada, horario superpuesto) |
+| cualquier otra | 500 | Error inesperado (se registra en el log) |
+
+### Parámetros de las reglas (`appsettings.json` → `ReglasNegocio`)
+```json
+"ReglasNegocio": {
+  "PorcentajeDescuentoJubiladoMenor": 15,
+  "IdsTipoEspectadorConDescuento": [ 2, 3 ],   // Jubilado, Menor
+  "IdTipoEspectadorMenor": 3,
+  "TextoClasificacionMayores": "18",           // clasificación que se considera +18
+  "EdadMayoria": 18,
+  "MaxEntradasPorCompra": 10,
+  "IdCanalBoleteria": 1,
+  "IdCanalWeb": 2
+}
+```
+Para cambiar el descuento o el tope de entradas no hace falta tocar código.
+
+### Servicios de negocio
+| Servicio | Reglas principales |
+|---|---|
+| `PeliculaService` | Título obligatorio (máx. 200), duración 1–600, clasificación existente; pósters |
+| `FuncionService` | Campos obligatorios, película activa, **no en el pasado**, **no superponer** en la sala, **con ventas no se mueve ni se cancela**; arma el DTO con los precios por tipo |
+| `SalaService` | Nombre único por complejo, 1–26 filas y 1–40 butacas por fila, genera las butacas; no cambia butacas si hay ventas; no elimina si tiene funciones |
+| `PrecioService` | Precio > 0, fecha ≥ hoy, cierra el precio anterior; **calcula el precio de cada entrada** |
+| `ClienteService` | Nombre/apellido obligatorios, DNI numérico y no repetido, nacimiento no futuro |
+| `VentaService` | Cliente/canal según rol, 1–10 entradas, función activa y **no empezada**, butaca de la sala y libre, **+18**, precios, formas de pago, ver solo compras propias |
+| `AuthService` | Login con hash, usuario activo, registro con validaciones y reutilización de persona por DNI |
+| `ReporteService` | Top 1–50, "desde" ≤ "hasta", año válido |
+| `CatalogoService` | Sin reglas (solo lectura) |
+
+### Servicios de infraestructura
 - **`TokenService`**: arma el JWT con los *claims* del usuario (id, nombre, email, rol, idCliente) y lo firma con HMAC-SHA256. Devuelve `LoginRespuestaDTO` con el token y los datos que el front guarda.
 - **`PosterService`**: guarda los pósters en `CineHollywoodTPI/wwwroot/posters/`.
   - **Subir archivo**: valida tamaño (5 MB) y que sea una imagen real mirando los primeros bytes (JPG, PNG, GIF, WEBP), no solo la extensión.
@@ -317,6 +410,18 @@ Los repositorios lanzan `InvalidOperationException` con un mensaje en español c
 ## 8. Lista completa de endpoints
 
 🔓 = público · 👤 = cualquier usuario logueado · 🛡️ = solo Administrador
+
+### Códigos de respuesta que usa la API
+| Código | Cuándo |
+|---|---|
+| **200 OK** | Consultas (GET) y modificaciones/bajas exitosas (PUT, DELETE) — devuelven `{ mensaje }` |
+| **201 Created** | Altas exitosas (POST): película, función, cliente, venta, sala, precio, registro. Devuelven `{ mensaje, id }` y, cuando existe un GET por id, el header `Location` con la URL del recurso nuevo (`CreatedAtAction`) |
+| **400 Bad Request** | Datos inválidos o regla de negocio no cumplida (`NegocioException`) |
+| **401 Unauthorized** | Sin token, token vencido o login incorrecto |
+| **403 Forbidden** | Logueado pero sin permiso (ej. un Cliente quiere usar un endpoint de Administrador) |
+| **404 Not Found** | No existe el recurso pedido |
+| **409 Conflict** | Choca con algo existente: email/DNI repetido, butaca ya vendida, horario superpuesto |
+| **500 Internal Server Error** | Error inesperado (se registra en el log) |
 
 ### Auth
 | Método | Ruta | | Descripción |
@@ -410,25 +515,36 @@ Si quien compra es un **cliente**, `idCliente` y `idCanal` se ignoran: se usan e
 
 ## 9. Reglas de negocio importantes
 
-### Transacción de venta (maestro-detalle) — `VentaRepository.RegistrarVentaAsync`
-Todo ocurre dentro de **una transacción `Serializable`** (si algo falla, `ROLLBACK` y no se guarda nada):
+### Venta (maestro-detalle)
 
-1. Valida cada entrada:
-   - la función existe, está activa y no pasó;
-   - la butaca existe, **pertenece a la sala de esa función** y está habilitada;
-   - la butaca **no está vendida** para esa función (ni repetida dentro de la misma compra);
-   - el tipo de espectador es válido.
-2. **Calcula el precio** de cada entrada en el servidor (`PrecioHelper`).
-3. Formas de pago: si viene una sola sin monto, paga el total. Si vienen varias, la suma tiene que dar el total.
-4. Inserta la **VENTA** (maestro) → obtiene el `id_venta`.
-5. Inserta las **ENTRADAs** (detalle) y las **VentaxFormaPago** con ese id.
-6. `COMMIT`.
+**1) `VentaService.RegistrarAsync` — reglas de negocio**
+1. Quién compra: un **cliente** compra a su nombre por el canal Web; un **admin** vende en boletería y tiene que elegir un cliente activo.
+2. Entre 1 y 10 entradas.
+3. Para cada entrada:
+   - la función existe, está activa y **no empezó** (se compara fecha **y hora**);
+   - la butaca **pertenece a la sala de esa función**, está habilitada y **libre** (ni repetida en la misma compra);
+   - el tipo de espectador es válido;
+   - **película +18**: no se venden entradas de tipo **Menor** ni a un **cliente menor de edad** (según su fecha de nacimiento);
+   - **precio** calculado por `PrecioService`: promo de la función, o **15% para Jubilado / Menor** (no se acumulan).
+4. Formas de pago: si viene una sola sin monto, paga el total. Si vienen varias, la suma tiene que dar el total.
 
-El aislamiento `Serializable` evita que dos personas compren la misma butaca al mismo tiempo.
+**2) `VentaRepository.RegistrarVentaAsync` — transacción `Serializable`**
+1. Vuelve a verificar, dentro de la transacción, que ninguna butaca se haya vendido en ese instante (dos compras simultáneas). Si pasó, `ROLLBACK` y el servicio responde 409.
+2. Inserta la **VENTA** (maestro) → obtiene el `id_venta`.
+3. Inserta las **ENTRADAs** (detalle) y las **VentaxFormaPago** con ese id.
+4. `COMMIT`. Si cualquier paso falla: `ROLLBACK` y no se guarda nada.
+
+### Descuentos
+| Caso | Precio |
+|---|---|
+| Función **con promoción** (ej. 2x1 = 50%) | Todos pagan con el descuento de la promo (el 15% no se suma) |
+| Función sin promoción, entrada **General** | Precio base |
+| Función sin promoción, entrada **Jubilado** o **Menor** | Precio base − 15% |
 
 ### Otras reglas
 - **Bajas lógicas**: películas, funciones y clientes no se borran, se marcan `activo = 0` (así las ventas viejas siguen teniendo sus datos).
-- **Funciones**: no se pueden crear en fecha pasada ni **superponer** con otra función de la misma sala (se usa la duración de la película).
+- **Funciones**: no se pueden crear en fecha/hora pasada ni **superponer** con otra función de la misma sala (se usa la duración de la película). Las que ya empezaron no aparecen como "próximas".
+- **Funciones con entradas vendidas**: no se puede cambiar película, sala, fecha ni hora, ni cancelarlas. Solo formato y promoción.
 - **Cartelera vs. estrenos**: no hay un campo "estado"; se deduce. Con funciones desde hoy → cartelera. Sin funciones → próximo estreno.
 - **Precios**: al cargar un precio nuevo desde una fecha, el que estaba vigente se cierra el día anterior. Las ventas ya hechas no cambian (cada ENTRADA guarda su `precio_final`).
 - **Salas**: el **tipo de sala** define el precio. Para tener funciones 3D hay que crear una sala de tipo 3D (y cargarle precio a ese tipo).
@@ -438,14 +554,38 @@ El aislamiento `Serializable` evita que dos personas compren la misma butaca al 
 
 ## 10. Frontend (proyecto Web)
 
-No usa frameworks: cada página HTML carga sus scripts en este orden:
+HTML + CSS + JavaScript, con **Bootstrap 5.3** para el diseño responsivo y los componentes. Cada página carga:
 
 ```html
-<script src="...sweetalert2.all.min.js"></script>  <!-- alertas -->
-<script src="js/api.js"></script>     <!-- SIEMPRE primero: API, sesión, utilidades -->
+<link href=".../bootstrap.min.css" rel="stylesheet">     <!-- Bootstrap -->
+<link rel="stylesheet" href="css/style.css">            <!-- personalización (después de Bootstrap) -->
+...
+<script src=".../bootstrap.bundle.min.js"></script>     <!-- JS de Bootstrap: navbar, modales, offcanvas -->
+<script src=".../sweetalert2.all.min.js"></script>      <!-- alertas -->
+<script src="js/api.js"></script>     <!-- SIEMPRE antes que los demás: API, sesión, utilidades -->
 <script src="js/main.js"></script>    <!-- páginas públicas: navbar y login -->
 <script src="js/xxx.js"></script>     <!-- lógica propia de la página -->
 ```
+
+### Bootstrap: qué se usa y dónde
+| Componente / utilidad | Dónde |
+|---|---|
+| **Grilla** (`container`, `row`, `row-cols-*`, `col-md-*`, `g-*`) | Cartelera y estrenos (1 → 2 → 3 → 4 columnas según el ancho), formularios, dashboard |
+| **Navbar** con `navbar-expand-lg` + `collapse` | Barra superior: en celular se colapsa en el botón ☰ |
+| **Offcanvas** (`offcanvas-lg`) | Menú lateral del panel: fijo en pantallas grandes, deslizable en celular |
+| **Cards** | Tarjetas de películas, pasos de la compra, métricas y secciones del panel |
+| **Modales** (`modal`, `modal-dialog`, `data-bs-dismiss`) | Login, registro, mis compras y todos los formularios del panel |
+| **Formularios** (`form-label`, `form-control`, `form-select`, `form-check`, `form-text`) | Todos los formularios |
+| **Botones, badges, alerts, list-group, tables, spinners** | En todo el sitio |
+| **Utilidades** (`d-flex`, `gap-*`, `mb-*`, `p-*`, `text-*`, `fw-*`, `rounded-*`) | En todo el sitio |
+| **Color modes** (`data-bs-theme="dark"`/`"light"`) | Botón de tema claro/oscuro |
+
+### CSS propio (`style.css` y `admin.css`)
+- **Variables CSS**: los colores del cine (`--cine-primary`…) y se **sobrescriben variables de Bootstrap** (`--bs-primary`, `--bs-body-bg`…) para cada tema.
+- **Selectores**: de clase (`.poster`), descendientes (`.navbar-transparente .btn`), de atributo (`[data-bs-theme="dark"]`, `[id^="step"]`), pseudo-clases (`:hover`, `:disabled`, `:focus-visible`, `:has()`), pseudo-elementos (`::before`, `::first-letter`).
+- **Box model**: `padding`, `border`, `margin`, `border-radius` y `box-shadow` en pósters, butacas, tarjetas.
+- Lo que Bootstrap no trae: hero, pósters generados, **carrusel 3D**, **mapa de butacas**.
+- **Responsive propio**: `@media` para el carrusel y el póster de la compra.
 
 ### `api.js` — la base de todo
 | Función / objeto | Para qué |
@@ -457,19 +597,20 @@ No usa frameworks: cada página HTML carga sus scripts en este orden:
 | `fmtMoneda`, `fmtFecha`, `fmtFechaLarga`, `fmtHora`, `hoyISO`… | Formatos en español (Argentina) |
 | `esc()` | Escapa HTML para no inyectar código con datos de la base |
 | `posterHTML()` | Dibuja el póster: imagen real, o uno generado con el título si no hay imagen |
-| `abrirModal()` / `cerrarModal()` | Modales propios (cierran con Escape o clic afuera) |
-| `Tema` | Modo claro / oscuro (se guarda en `localStorage`) |
+| `abrirModal()` / `cerrarModal()` | Abren/cierran un **modal de Bootstrap** (`bootstrap.Modal`) |
+| `Tema` | Modo claro / oscuro con el `data-bs-theme` de Bootstrap (se guarda en `localStorage`) |
 | `htmlDetalleVenta()` | Tabla con el detalle de una venta (comprobante, "Mis compras" y panel) |
 
 ### `main.js` — páginas públicas
-- Navbar: transparente en el inicio y sólida al scrollear, menú en celulares, link activo.
+- Dibuja la **navbar de Bootstrap** en `<header id="navbarCine">` (así no se repite en cada HTML): transparente en el inicio y sólida al scrollear, colapsable en celulares, link activo.
 - Inyecta los **modales de Login, Registro y "Mis compras"** en todas las páginas (están en un solo lugar).
 - Muestra "Iniciar sesión / Registrarse" o "Hola, nombre / Mis compras / Salir" según la sesión.
 - Agrega el link **Panel de administrador** solo si el rol es admin.
 
 ### `butacas.js` — componente reutilizable
 - `crearMapaButacas(contenedor, butacas, { max, onChange })`: dibuja la sala (pantalla, filas, butacas libres, ocupadas y seleccionadas).
-- `renderDetalleEntradas(...)`: lista las butacas elegidas con un `<select>` de tipo de espectador cada una y devuelve una función que arma el array `entradas` para la API.
+- `renderDetalleEntradas(contenedor, seleccion, funcion, onCambio)`: lista las butacas elegidas con un `<select>` de tipo de espectador (General / Jubilado / Menor, con el precio que calculó el servidor) y devuelve `{ entradas(), total(), detalle() }`.
+- **Closures**: las dos funciones crean variables internas (`seleccionadas`, la lista de selects) y devuelven funciones que las siguen usando después de terminar. Desde afuera no se pueden modificar directamente.
 
 Se usa en **reserva.html** (compra web) y en **admin.html** (venta en boletería).
 
@@ -518,7 +659,62 @@ Panel → **Precios** (cargar precio a "3D XD") → **Salas** (crear una sala ti
 
 ---
 
-## 12. Problemas comunes
+## 12. Probar la API con Postman
+
+En `postman/CineHollywood.postman_collection.json` hay una colección lista para importar.
+
+1. Levantar la API (`CineHollywoodTPI.API`).
+2. En Postman: **Import → File →** elegir el archivo.
+3. Correr **`1. Auth > Login admin`**: guarda el token en la variable `{{token}}`. La colección tiene **Auth = Bearer {{token}}**, así que todas las requests lo usan solas.
+4. Para correr todo: botón **Run** sobre la colección (Collection Runner). Las requests están **en orden** y se pasan los ids por variables (`{{idPelicula}}`, `{{idFuncion}}`, `{{idButaca}}`, `{{idVenta}}`…).
+
+| Carpeta | Qué prueba |
+|---|---|
+| 1. Auth | Login (200), login incorrecto (401), registro (201), email repetido (409) |
+| 2. Catálogos | Listas públicas (200) |
+| 3. Películas | Listar, crear (**201** + `Location`), obtener, modificar, título vacío (400), inexistente (404), sin token (401), como cliente (403) |
+| 4. Salas | Crear (201), nombre repetido (409), 30 filas (400) |
+| 5. Precios | Programar precio (201), fecha pasada (400) |
+| 6. Funciones | Crear (201), superpuesta (409), fecha pasada (400), **precio con 15% para Jubilado**, butacas |
+| 7. Clientes | Crear (201), modificar, DNI repetido (409), DNI inválido (400) |
+| 8. Ventas | **Venta (transacción maestro-detalle) 201**, misma butaca (409), sin entradas (400), detalle, venta ajena (403), cancelar/mover función con ventas (400) |
+| 9. Reportes | Más vendidas, mes a mes (12 meses), top inválido (400), como cliente (403) |
+| 10. Limpieza | Baja física del precio y bajas lógicas de película y cliente; dar de baja dos veces (404) |
+
+Cada request tiene **tests** (pestaña *Tests*) que verifican el código HTTP y algunos datos de la respuesta, y un script que guarda los ids para las siguientes. Se probó de punta a punta: **60/60 OK**.
+
+> Correr la colección completa **crea datos de prueba** (película, sala, función, cliente, venta). La carpeta 10 da de baja lo que se puede; la sala y la función quedan porque tienen una venta (regla de negocio).
+
+---
+
+## 13. Temas de la materia: dónde está cada uno
+
+| Tema | Dónde verlo en el proyecto |
+|---|---|
+| **Arquitectura cliente-servidor** | Cliente: `CineHollywoodTPI.Web` (navegador, puerto 5020). Servidor: `CineHollywoodTPI.API` (puerto 5191). Se comunican por **HTTP** intercambiando **JSON** |
+| **Sistemas basados en HTTP / peticiones y respuestas** | `api.js` → función `api()` arma la petición (método, headers, body) con `fetch`; la API responde con código + JSON |
+| **Códigos de estado** | Ver [sección 8](#códigos-de-respuesta-que-usa-la-api): 200, 201, 400, 401, 403, 404, 409, 500. Los errores salen de `ManejoErroresMiddleware` |
+| **Web API con C#, controladores, POST/PUT/DELETE** | `CineHollywoodTPI/Controllers/*` con `[HttpGet]`, `[HttpPost]`, `[HttpPut("{id}")]`, `[HttpDelete("{id}")]`, `[FromBody]`, `[FromQuery]` |
+| **Mensajes de respuesta** | `Ok(...)`, `CreatedAtAction(...)` (201), excepciones → 400/404/409 con mensaje en español |
+| **Postman** | `postman/CineHollywood.postman_collection.json` ([sección 12](#12-probar-la-api-con-postman)) |
+| **Entity Framework Core** | `CineHollywoodTPI.Data/Models` (scaffold), `SistemaCineContext` |
+| **DbContext / Unit of Work** | El `SistemaCineContext` se inyecta por request (*scoped*): todos los cambios se acumulan y se confirman juntos con **`SaveChangesAsync()`**. Ej.: `ClienteRepository.AddAsync` guarda PERSONA + CLIENTE en un solo `SaveChanges`; `SalaRepository.CrearAsync` guarda la sala con todas sus butacas |
+| **Manejo de entidades / LINQ** | Repositorios: `Where`, `Include`/`ThenInclude`, `Select`, `GroupBy`, `OrderBy`, `Any`, `Count`, `Sum` (ej. `ReporteRepository.GetPeliculasMasVendidasAsync`) |
+| **async / await / manejo de errores** | Todo el backend es `async Task<...>`; errores con excepciones propias (`Services/Excepciones.cs`) + middleware. En el front, `async/await` con `try/catch` en cada llamada a la API |
+| **Transacciones con EF** | `BeginTransactionAsync` / `CommitAsync` / `RollbackAsync` en `VentaRepository.RegistrarVentaAsync` (maestro-detalle, `Serializable`), `SalaRepository`, `PrecioRepository`, `UsuarioRepository` |
+| **Patrón Repository** | Interfaces en `Data/Interfaces`, implementaciones en `Data/Repositories`, inyectadas con DI. A diferencia de un **DAO** (un objeto por tabla con CRUD básico), los repositorios exponen métodos del dominio (`GetEnCarteleraAsync`, `TieneEntradasVendidasAsync`) y pueden abarcar varias tablas |
+| **Bajas lógicas y físicas** | Lógicas (`activo = 0`): películas, funciones, clientes. Físicas (`DELETE`): salas sin funciones, precios que todavía no empezaron |
+| **Formularios HTML** | Login, registro y todos los ABM del panel (`<form>`, `<label for>`, `<input type="date/number/email/file">`, `<select>`, `required`) |
+| **CSS: selectores, propiedades, variables** | `css/style.css` (ver [sección 10](#css-propio-stylecss-y-admincss)) |
+| **Box model** | Butacas, pósters, tarjetas (`padding`, `border`, `margin`, `border-radius`) |
+| **Responsive con Bootstrap** | Grilla `row-cols-*`, navbar colapsable, offcanvas del panel, `table-responsive` ([sección 10](#bootstrap-qué-se-usa-y-dónde)) |
+| **JavaScript: sintaxis, DOM** | Todo el front arma el HTML con template strings y `innerHTML`, `querySelector`, `classList`, `dataset` |
+| **Eventos** | `addEventListener('click' / 'submit' / 'change' / 'input' / 'scroll' / 'DOMContentLoaded')`, eventos propios (`sesion-cambiada`, `tema-cambiado`) y de Bootstrap (`shown.bs.modal`) |
+| **Funciones y closures** | `butacas.js` (`crearMapaButacas`, `renderDetalleEntradas`), `index.js` (el carrusel guarda `actual` en un closure) |
+
+---
+
+## 14. Problemas comunes
 
 | Síntoma | Causa / solución |
 |---|---|
@@ -534,15 +730,19 @@ Panel → **Precios** (cargar precio a "3D XD") → **Salas** (crear una sala ti
 
 ---
 
-## 13. Cómo agregar algo nuevo
+## 15. Cómo agregar algo nuevo
 
 Ejemplo: un ABM de **Promociones**.
 
 1. **Data/DTOs**: crear `PromocionInsertDTO` (y usar `PromocionDTO` para lectura).
-2. **Data/Interfaces**: `IPromocionRepository` con los métodos.
-3. **Data/Repositories**: `PromocionRepository` implementando la interfaz con `_context.Promociones`. Si algo no es válido, `throw new InvalidOperationException("mensaje")`.
-4. **API/Program.cs**: `builder.Services.AddScoped<IPromocionRepository, PromocionRepository>();`
-5. **API/Controllers**: `PromocionController` con `[Authorize(Roles = "Administrador")]` siguiendo el patrón del punto 6.
+2. **Data/Interfaces + Repositories**: `IPromocionRepository` / `PromocionRepository` con `_context.Promociones`. **Solo consultas y guardado**, sin reglas.
+3. **API/Services/Interfaces + Services**: `IPromocionService` / `PromocionService` con **las reglas** (por ejemplo, porcentaje entre 1 y 100, descripción obligatoria). Si algo no se cumple: `throw new NegocioException("mensaje")` (o `NoEncontradoException`, `ConflictoException`…).
+4. **API/Program.cs**: registrar los dos:
+   ```csharp
+   builder.Services.AddScoped<IPromocionRepository, PromocionRepository>();
+   builder.Services.AddScoped<IPromocionService, PromocionService>();
+   ```
+5. **API/Controllers**: `PromocionController` con `[Authorize(Roles = "Administrador")]` que **solo llama al servicio** (sin `try/catch`, el middleware se encarga de los errores).
 6. **Web/admin.html**: agregar un `<li>` en el menú con `data-target="promociones"`, una `<section id="section-promociones" class="admin-section" hidden>` y el modal.
 7. **Web/js/admin.js**: agregar `promociones` en `TITULOS` y en el mapa de `mostrarSeccion`, y las funciones `cargar…`, `render…`, `abrirForm…`, `guardar…`, `borrar…` copiando el patrón de Clientes.
 

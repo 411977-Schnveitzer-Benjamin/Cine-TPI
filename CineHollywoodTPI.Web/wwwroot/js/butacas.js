@@ -1,7 +1,11 @@
 /* =========================================================================
    butacas.js - Selector de butacas + detalle de entradas (tipo de espectador)
    Lo usan reserva.html (compra web) y admin.html (venta en boletería).
-   Requiere: api.js
+   Requiere: Bootstrap, api.js
+
+   Ejemplo de CLOSURE: crearMapaButacas crea la variable "seleccionadas" y devuelve
+   funciones que la siguen usando después de que crearMapaButacas terminó.
+   Nadie de afuera puede modificar "seleccionadas" directamente.
    ========================================================================= */
 
 /**
@@ -25,7 +29,7 @@ function crearMapaButacas(contenedor, butacas, { max = 10, onChange = () => {} }
     Object.values(filas).forEach(f => f.sort((a, b) => (a.numero ?? 0) - (b.numero ?? 0)));
 
     contenedor.innerHTML = `
-        <div class="sala-mapa">
+        <div class="sala-mapa bg-body-tertiary border rounded-3 px-3 py-4">
             <div class="pantalla">PANTALLA</div>
             ${Object.keys(filas).sort().map(fila => `
                 <div class="fila-butacas">
@@ -42,10 +46,10 @@ function crearMapaButacas(contenedor, butacas, { max = 10, onChange = () => {} }
                     }).join('')}
                     <span class="fila-label">${esc(fila)}</span>
                 </div>`).join('')}
-            <div class="leyenda">
-                <span><i style="background:var(--seat-free)"></i>Libre</span>
-                <span><i style="background:var(--seat-taken)"></i>Ocupada</span>
-                <span><i style="background:var(--seat-selected)"></i>Tu selección</span>
+            <div class="leyenda d-flex flex-wrap justify-content-center gap-4 mt-3 small text-body-secondary">
+                <span class="d-inline-flex align-items-center gap-2"><i style="background:var(--seat-free)"></i>Libre</span>
+                <span class="d-inline-flex align-items-center gap-2"><i style="background:var(--seat-taken)"></i>Ocupada</span>
+                <span class="d-inline-flex align-items-center gap-2"><i style="background:var(--seat-selected)"></i>Tu selección</span>
             </div>
         </div>`;
 
@@ -73,37 +77,71 @@ function crearMapaButacas(contenedor, butacas, { max = 10, onChange = () => {} }
 
 /**
  * Lista las butacas elegidas con un <select> de tipo de espectador cada una.
- * Devuelve una función que arma el array de entradas para la API.
+ * Los precios por tipo (General, Jubilado, Menor...) vienen calculados por el servidor
+ * en funcion.precios (con el descuento de la promo o el 15% de jubilado/menor).
+ * Los tipos no permitidos (ej. "Menor" en una película +18) no se ofrecen.
+ *
+ * @param {Function} onCambio  se llama cuando cambia algún tipo (para actualizar totales)
+ * @returns {{entradas: () => Array, total: () => number, detalle: () => Array}}
  */
-function renderDetalleEntradas(contenedor, seleccion, tiposEspectador, precioUnitario, idFuncion) {
+function renderDetalleEntradas(contenedor, seleccion, funcion, onCambio = () => {}) {
+    const vacio = { entradas: () => [], total: () => 0, detalle: () => [] };
     if (!seleccion.length) {
-        contenedor.innerHTML = '<p class="text-muted">Elegí tus butacas en el mapa.</p>';
-        return () => [];
+        contenedor.innerHTML = '<p class="text-body-secondary">Elegí tus butacas en el mapa.</p>';
+        return vacio;
     }
+
+    const precios = (funcion.precios ?? []).filter(p => p.permitido);
+    const precioDe = idTipo => precios.find(p => p.idTipoEspectador === Number(idTipo));
 
     // Conservamos el tipo elegido si se vuelve a dibujar la lista
     const previos = {};
     contenedor.querySelectorAll('select[data-butaca]').forEach(s => previos[s.dataset.butaca] = s.value);
 
-    const opciones = tiposEspectador.map(t => `<option value="${t.id}">${esc(t.descripcion)}</option>`).join('');
+    const opciones = precios.map(p =>
+        `<option value="${p.idTipoEspectador}">${esc(p.tipoEspectador)} — ${fmtMoneda(p.precio)}${p.descuento ? ` (${esc(p.descuento)})` : ''}</option>`
+    ).join('');
 
-    contenedor.innerHTML = seleccion
+    const aviso = funcion.esParaMayores
+        ? `<div class="alert alert-warning py-2 small">Película ${esc(funcion.clasificacion)}: no se venden entradas de Menor.</div>`
+        : '';
+
+    // Cada entrada es una fila de la grilla de Bootstrap (se apila en celulares)
+    contenedor.innerHTML = aviso + seleccion
         .slice()
         .sort((a, b) => `${a.fila}${String(a.numero).padStart(3, '0')}`.localeCompare(`${b.fila}${String(b.numero).padStart(3, '0')}`))
         .map(b => `
-            <div class="entrada-item">
-                <strong>Butaca ${esc(b.fila)}${b.numero}</strong>
-                <select class="form-control" data-butaca="${b.idButaca}" aria-label="Tipo de espectador para la butaca ${esc(b.fila)}${b.numero}">${opciones}</select>
-                <span class="entrada-precio">${fmtMoneda(precioUnitario)}</span>
+            <div class="row g-2 align-items-center border rounded-3 bg-body-tertiary mx-0 mb-2 p-2">
+                <div class="col-4 col-sm-3 fw-semibold">Butaca ${esc(b.fila)}${b.numero}</div>
+                <div class="col-8 col-sm-6">
+                    <select class="form-select form-select-sm" data-butaca="${b.idButaca}" data-nombre="${esc(b.fila)}${b.numero}" aria-label="Tipo de espectador para la butaca ${esc(b.fila)}${b.numero}">${opciones}</select>
+                </div>
+                <div class="col-12 col-sm-3 text-end fw-semibold" data-precio-butaca="${b.idButaca}"></div>
             </div>`).join('');
 
-    contenedor.querySelectorAll('select[data-butaca]').forEach(s => {
-        if (previos[s.dataset.butaca]) s.value = previos[s.dataset.butaca];
+    const selects = () => [...contenedor.querySelectorAll('select[data-butaca]')];
+
+    const actualizarPrecios = () => {
+        selects().forEach(s => {
+            contenedor.querySelector(`[data-precio-butaca="${s.dataset.butaca}"]`).textContent =
+                fmtMoneda(precioDe(s.value)?.precio ?? 0);
+        });
+    };
+
+    selects().forEach(s => {
+        if (previos[s.dataset.butaca] && precioDe(previos[s.dataset.butaca])) s.value = previos[s.dataset.butaca];
+        s.addEventListener('change', () => { actualizarPrecios(); onCambio(); });
+    });
+    actualizarPrecios();
+
+    const detalle = () => selects().map(s => {
+        const p = precioDe(s.value);
+        return { butaca: s.dataset.nombre, idButaca: Number(s.dataset.butaca), idTipoEspectador: Number(s.value), tipo: p?.tipoEspectador, precio: p?.precio ?? 0 };
     });
 
-    return () => [...contenedor.querySelectorAll('select[data-butaca]')].map(s => ({
-        idFuncion,
-        idButaca: Number(s.dataset.butaca),
-        idTipoEspectador: Number(s.value)
-    }));
+    return {
+        entradas: () => detalle().map(d => ({ idFuncion: funcion.idFuncion, idButaca: d.idButaca, idTipoEspectador: d.idTipoEspectador })),
+        total: () => detalle().reduce((s, d) => s + d.precio, 0),
+        detalle
+    };
 }

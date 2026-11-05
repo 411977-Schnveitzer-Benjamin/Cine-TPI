@@ -1,90 +1,53 @@
+using CineHollywoodTPI.API.Services.Interfaces;
 using CineHollywoodTPI.Data.DTOs;
-using CineHollywoodTPI.Data.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CineHollywoodTPI.API.Controllers
 {
-    // ABM de salas (con generación automática de butacas). Solo Administrador.
+    // ABM de salas (solo Administrador). Las reglas están en SalaService.
     [ApiController]
     [Route("api/[controller]")]
     [Authorize(Roles = "Administrador")]
     public class SalaController : ControllerBase
     {
-        private readonly ISalaRepository _salaRepository;
+        private readonly ISalaService _salaService;
 
-        public SalaController(ISalaRepository salaRepository)
+        public SalaController(ISalaService salaService)
         {
-            _salaRepository = salaRepository;
+            _salaService = salaService;
         }
 
         // GET: api/sala
         [HttpGet]
-        public async Task<IActionResult> GetAll() => Ok(await _salaRepository.GetAllAsync());
+        public async Task<IActionResult> GetAll() => Ok(await _salaService.GetAllAsync());
 
         // GET: api/sala/complejos
         [HttpGet("complejos")]
-        public async Task<IActionResult> GetComplejos() => Ok(await _salaRepository.GetComplejosAsync());
+        public async Task<IActionResult> GetComplejos() => Ok(await _salaService.GetComplejosAsync());
 
         // POST: api/sala
         [HttpPost]
         public async Task<IActionResult> Crear([FromBody] SalaGuardarDTO dto)
         {
-            try
-            {
-                if (dto == null) return BadRequest("Los datos de la sala son inválidos.");
-                var id = await _salaRepository.CrearAsync(dto);
-                return Ok(new { mensaje = $"Sala creada con {dto.Filas * dto.ButacasPorFila} butacas.", id });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error interno al crear la sala: {ex.Message}");
-            }
+            var id = await _salaService.CrearAsync(dto);
+            return StatusCode(StatusCodes.Status201Created, new { mensaje = $"Sala creada con {dto.Filas * dto.ButacasPorFila} butacas.", id });
         }
 
         // PUT: api/sala/5
         [HttpPut("{id:int}")]
         public async Task<IActionResult> Modificar(int id, [FromBody] SalaGuardarDTO dto)
         {
-            try
-            {
-                if (dto == null) return BadRequest("Los datos de la sala son inválidos.");
-                if (!await _salaRepository.ActualizarAsync(id, dto))
-                    return NotFound($"No existe la sala con ID {id}.");
-                return Ok(new { mensaje = "Sala modificada con éxito." });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error interno al modificar la sala: {ex.Message}");
-            }
+            await _salaService.ModificarAsync(id, dto);
+            return Ok(new { mensaje = "Sala modificada con éxito." });
         }
 
         // DELETE: api/sala/5
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> Eliminar(int id)
         {
-            try
-            {
-                if (!await _salaRepository.EliminarAsync(id))
-                    return NotFound($"No existe la sala con ID {id}.");
-                return Ok(new { mensaje = "Sala eliminada." });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error interno al eliminar la sala: {ex.Message}");
-            }
+            await _salaService.EliminarAsync(id);
+            return Ok(new { mensaje = "Sala eliminada." });
         }
     }
 }

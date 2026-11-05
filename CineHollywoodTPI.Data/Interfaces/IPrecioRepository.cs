@@ -1,17 +1,18 @@
-using CineHollywoodTPI.Data.DTOs;
+using CineHollywoodTPI.Data.Models;
 
 namespace CineHollywoodTPI.Data.Interfaces
 {
+    // Solo acceso a datos de PRECIO_TIPO_SALA. Las reglas están en PrecioService.
     public interface IPrecioRepository
     {
-        Task<IEnumerable<PrecioDTO>> GetAllAsync();
+        Task<IEnumerable<PrecioTipoSala>> GetAllAsync(); // incluye el tipo de sala
+        Task<PrecioTipoSala?> GetByIdAsync(int idPrecio);
+        Task<List<PrecioTipoSala>> GetPorTipoSalaAsync(int idTipoSala);
 
-        // Carga un precio nuevo para un tipo de sala desde una fecha.
-        // El precio que estaba vigente se cierra el día anterior (en una transacción).
-        // Lanza InvalidOperationException si los datos no son válidos.
-        Task<int> CrearAsync(int idTipoSala, decimal precio, DateOnly fechaDesde);
+        // Guarda el precio nuevo y los cambios de fecha_hasta de los anteriores en una transacción
+        Task<int> CrearAsync(PrecioTipoSala nuevo);
 
-        // Elimina un precio que todavía no empezó (o empieza hoy) y reabre el anterior.
-        Task<bool> EliminarAsync(int idPrecio);
+        // Elimina el precio y guarda el cambio del anterior (si se modificó) en una transacción
+        Task EliminarAsync(PrecioTipoSala precio);
     }
 }

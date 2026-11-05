@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,64 +8,48 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <header class="navbar">
-        <div class="container navbar-container">
-            <a href="index.html" class="logo">
-                <span class="logo-mark"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="2.5"/><path d="M7 2v20M17 2v20M2 12h20M2 7h5M2 17h5M17 17h5M17 7h5"/></svg></span>
-                <span>Cines <b>Hollywood</b></span>
-            </a>
-            <nav class="nav-links" aria-label="Principal">
-                <a href="cartelera.html" class="nav-link">Cartelera</a>
-                <a href="estrenos.html" class="nav-link">Próximos estrenos</a>
-                <a href="promociones.html" class="nav-link">Promociones</a>
-            </nav>
-            <div class="auth-buttons" id="authArea"></div>
-            <button class="btn btn-icon mobile-menu-btn" id="mobileMenuBtn" aria-label="Abrir menú">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
-            </button>
-        </div>
-    </header>
+    <!-- La navbar la dibuja main.js. data-transparente: transparente sobre el hero -->
+    <header id="navbarCine" data-transparente></header>
 
     <main>
         <section class="hero">
-            <div class="hero-overlay"></div>
-            <div class="container hero-content">
-                <span class="hero-badge">Estrenos 2026</span>
-                <h1 class="hero-title">Viví la mejor<br>experiencia del cine</h1>
-                <p class="hero-subtitle">Elegí tu película, tu función y tu butaca. Comprá tus entradas online en segundos.</p>
-                <div class="hero-actions">
-                    <a href="cartelera.html" class="btn btn-primary btn-lg">Ver cartelera</a>
-                    <a href="promociones.html" class="btn btn-glass btn-lg">Ver promociones</a>
+            <div class="container">
+                <span class="badge rounded-pill hero-badge px-3 py-2 mb-3">Estrenos 2026</span>
+                <h1 class="display-3 fw-bold mb-3">Viví la mejor<br>experiencia del cine</h1>
+                <p class="lead mb-4">Elegí tu película, tu función y tu butaca. Comprá tus entradas online en segundos.</p>
+                <div class="d-flex flex-wrap gap-3">
+                    <a href="cartelera.html" class="btn btn-primary btn-lg rounded-pill px-4">Ver cartelera</a>
+                    <a href="promociones.html" class="btn btn-outline-light btn-lg rounded-pill px-4">Ver promociones</a>
                 </div>
             </div>
         </section>
 
-        <section class="section">
+        <section class="py-5">
             <div class="container">
-                <h2 class="section-title">
-                    En cartelera
-                    <span class="carousel-controls">
-                        <button class="btn btn-icon" id="prevSlide" aria-label="Anterior"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg></button>
-                        <button class="btn btn-icon" id="nextSlide" aria-label="Siguiente"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg></button>
-                    </span>
-                </h2>
-                <div class="carousel-container">
-                    <div class="carousel-track" id="carouselTrack"></div>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="fw-bold m-0">En cartelera</h2>
+                    <div class="d-flex gap-2" id="carouselControles">
+                        <button class="btn btn-outline-secondary rounded-circle" id="prevSlide" aria-label="Anterior">&#8249;</button>
+                        <button class="btn btn-outline-secondary rounded-circle" id="nextSlide" aria-label="Siguiente">&#8250;</button>
+                    </div>
                 </div>
+                <div class="carousel-3d" id="carouselTrack"></div>
             </div>
         </section>
     </main>
 
-    <footer class="footer">
-        <div class="container">
+    <footer class="border-top py-4 text-body-secondary small">
+        <div class="container d-flex flex-wrap justify-content-between gap-2">
             <span>© 2026 Cines Hollywood - TPI</span>
             <span>Horarios y precios sujetos a cambios.</span>
         </div>
     </footer>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.14.5/sweetalert2.all.min.js"></script>
     <script src="js/api.js"></script>
     <script src="js/main.js"></script>

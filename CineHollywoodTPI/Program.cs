@@ -1,6 +1,8 @@
 using System.Security.Claims;
 using System.Text;
+using CineHollywoodTPI.API.Middleware;
 using CineHollywoodTPI.API.Services;
+using CineHollywoodTPI.API.Services.Interfaces;
 using CineHollywoodTPI.Data.Interfaces;
 using CineHollywoodTPI.Data.Models;
 using CineHollywoodTPI.Data.Repositories;
@@ -32,8 +34,11 @@ builder.Services.AddDbContext<SistemaCineContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // ============================================================================
-// 3. REPOSITORIOS Y SERVICIOS (Inyección de Dependencias)
+// 3. INYECCIÓN DE DEPENDENCIAS
+//    Controller  ->  Service (reglas de negocio)  ->  Repository (acceso a datos)
 // ============================================================================
+
+// 3.a Repositorios (capa de datos)
 builder.Services.AddScoped<IPeliculaRepository, PeliculaRepository>();
 builder.Services.AddScoped<IFuncionRepository, FuncionRepository>();
 builder.Services.AddScoped<IVentaRepository, VentaRepository>();
@@ -44,9 +49,23 @@ builder.Services.AddScoped<ICatalogoRepository, CatalogoRepository>();
 builder.Services.AddScoped<IPrecioRepository, PrecioRepository>();
 builder.Services.AddScoped<ISalaRepository, SalaRepository>();
 
-builder.Services.AddScoped<TokenService>();
+// 3.b Servicios (capa de negocio)
+builder.Services.AddScoped<IPeliculaService, PeliculaService>();
+builder.Services.AddScoped<IFuncionService, FuncionService>();
+builder.Services.AddScoped<IVentaService, VentaService>();
+builder.Services.AddScoped<IClienteService, ClienteService>();
+builder.Services.AddScoped<ISalaService, SalaService>();
+builder.Services.AddScoped<IPrecioService, PrecioService>();
+builder.Services.AddScoped<IReporteService, ReporteService>();
+builder.Services.AddScoped<ICatalogoService, CatalogoService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
-// Pósters: se guardan en wwwroot/posters. El HttpClient se usa para descargar imágenes desde un link.
+// Parámetros de las reglas de negocio (descuentos, edad, topes...) desde appsettings.json
+builder.Services.Configure<ReglasNegocioOptions>(builder.Configuration.GetSection(ReglasNegocioOptions.Seccion));
+
+// 3.c Servicios de infraestructura
+builder.Services.AddScoped<TokenService>();
+builder.Services.AddScoped<IPasswordHasher<Usuario>, PasswordHasher<Usuario>>(); // hash seguro de contraseñas (PBKDF2)
 builder.Services.AddSingleton<PosterService>();
 builder.Services.AddHttpClient("posters", http =>
 {
@@ -55,7 +74,6 @@ builder.Services.AddHttpClient("posters", http =>
     http.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) CineHollywoodTPI/1.0");
     http.DefaultRequestHeaders.Accept.ParseAdd("image/*,text/html;q=0.8,*/*;q=0.5");
 });
-builder.Services.AddScoped<IPasswordHasher<Usuario>, PasswordHasher<Usuario>>(); // Hash seguro de contraseñas (PBKDF2)
 
 // ============================================================================
 // 4. AUTENTICACIÓN JWT
@@ -117,12 +135,11 @@ using (var scope = app.Services.CreateScope())
 {
     try
     {
-        var usuarios = scope.ServiceProvider.GetRequiredService<IUsuarioRepository>();
-        var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<Usuario>>();
+        var auth = scope.ServiceProvider.GetRequiredService<IAuthService>();
         var email = app.Configuration["AdminInicial:Email"] ?? "admin@cinehollywood.com";
         var password = app.Configuration["AdminInicial:Password"] ?? "Admin123!";
 
-        if (await usuarios.CrearAdminSiNoExisteAsync(email, hasher.HashPassword(null!, password)))
+        if (await auth.CrearAdminInicialAsync(email, password))
             app.Logger.LogInformation("Usuario administrador creado: {Email}", email);
     }
     catch (Exception ex)
@@ -131,6 +148,9 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+// ============================================================================
+// 7. PIPELINE (el orden importa)
+// ============================================================================
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -146,8 +166,11 @@ else
 // Sirve las imágenes guardadas: http://localhost:5191/posters/archivo.jpg
 app.UseStaticFiles();
 
-// CORS antes de autenticación/autorización
+// CORS antes que todo lo demás, así las respuestas de error también llevan los headers CORS
 app.UseCors("PermitirTodo");
+
+// Convierte las excepciones de los servicios en 400 / 401 / 403 / 404 / 409 / 500
+app.UseMiddleware<ManejoErroresMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();

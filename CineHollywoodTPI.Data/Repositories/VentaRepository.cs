@@ -117,93 +117,30 @@ namespace CineHollywoodTPI.Data.Repositories
         }
 
         // 4. TRANSACCIÓN CRÍTICA: Registrar la venta (maestro) y sus entradas (detalle) juntas.
+        //    Las validaciones de negocio y los precios ya los hizo VentaService.
         //    Si cualquier paso falla se hace ROLLBACK y no queda nada a medias.
-        public async Task<int> RegistrarVentaAsync(
-            Venta venta,
-            IEnumerable<Entrada> entradas,
-            IEnumerable<VentaxFormaPago>? formasPago = null)
+        public async Task<int?> RegistrarVentaAsync(Venta venta, IEnumerable<Entrada> entradas, IEnumerable<VentaxFormaPago> formasPago)
         {
             var listaEntradas = entradas.ToList();
-            var listaPagos = formasPago?.ToList() ?? new List<VentaxFormaPago>();
+            var listaPagos = formasPago.ToList();
 
-            if (listaEntradas.Count == 0)
-                throw new InvalidOperationException("La venta tiene que tener al menos una entrada.");
-
-            // Serializable: evita que dos ventas simultáneas vendan la misma butaca
+            // Serializable: bloquea el rango leído, así dos ventas simultáneas no venden la misma butaca
             await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
             try
             {
-                // --- Validaciones del detalle ---
-                var idsFuncion = listaEntradas.Select(e => e.IdFuncion ?? 0).Distinct().ToList();
-
-                var funciones = await _context.Funcion
-                    .Include(f => f.IdPromocionNavigation)
-                    .Include(f => f.IdSalaNavigation!)
-                        .ThenInclude(s => s.IdTipoSalaNavigation!)
-                            .ThenInclude(t => t.PrecioTipoSalas)
-                    .Where(f => idsFuncion.Contains(f.IdFuncion))
-                    .AsSplitQuery()
-                    .ToDictionaryAsync(f => f.IdFuncion);
-
-                var idsButaca = listaEntradas.Select(e => e.IdButaca ?? 0).Distinct().ToList();
-                var butacas = await _context.Butacas
-                    .Where(b => idsButaca.Contains(b.IdButaca))
-                    .ToDictionaryAsync(b => b.IdButaca);
-
+                // Control de integridad dentro de la transacción: ¿alguna butaca se vendió recién?
+                var idsFuncion = listaEntradas.Select(e => e.IdFuncion).Distinct().ToList();
+                var idsButaca = listaEntradas.Select(e => e.IdButaca).Distinct().ToList();
                 var yaVendidas = await _context.Entrada
-                    .Where(e => e.IdFuncion != null && idsFuncion.Contains(e.IdFuncion.Value) &&
-                                e.IdButaca != null && idsButaca.Contains(e.IdButaca.Value))
+                    .Where(e => idsFuncion.Contains(e.IdFuncion) && idsButaca.Contains(e.IdButaca))
                     .Select(e => new { e.IdFuncion, e.IdButaca })
                     .ToListAsync();
 
-                var tiposEspectador = await _context.TipoEspectadors.Select(t => t.IdTipoEspectador).ToListAsync();
-
-                var hoy = DateOnly.FromDateTime(DateTime.Today);
-                var butacasDeEstaVenta = new HashSet<(int, int)>();
-
-                foreach (var entrada in listaEntradas)
+                if (listaEntradas.Any(n => yaVendidas.Any(v => v.IdFuncion == n.IdFuncion && v.IdButaca == n.IdButaca)))
                 {
-                    if (entrada.IdFuncion == null || !funciones.TryGetValue(entrada.IdFuncion.Value, out var funcion))
-                        throw new InvalidOperationException($"La función {entrada.IdFuncion} no existe.");
-
-                    if (!funcion.Activo)
-                        throw new InvalidOperationException($"La función {funcion.IdFuncion} no está activa.");
-
-                    if (funcion.Fecha < hoy)
-                        throw new InvalidOperationException($"La función {funcion.IdFuncion} ya pasó.");
-
-                    if (entrada.IdButaca == null || !butacas.TryGetValue(entrada.IdButaca.Value, out var butaca))
-                        throw new InvalidOperationException($"La butaca {entrada.IdButaca} no existe.");
-
-                    if (butaca.IdSala != funcion.IdSala)
-                        throw new InvalidOperationException($"La butaca {butaca.Fila}{butaca.Numero} no pertenece a la sala de la función.");
-
-                    if (butaca.Habilitada == false)
-                        throw new InvalidOperationException($"La butaca {butaca.Fila}{butaca.Numero} no está habilitada.");
-
-                    if (yaVendidas.Any(v => v.IdFuncion == funcion.IdFuncion && v.IdButaca == butaca.IdButaca) ||
-                        !butacasDeEstaVenta.Add((funcion.IdFuncion, butaca.IdButaca)))
-                        throw new InvalidOperationException($"La butaca {butaca.Fila}{butaca.Numero} ya está ocupada para esa función.");
-
-                    if (entrada.IdTipoEspectador == null || !tiposEspectador.Contains(entrada.IdTipoEspectador.Value))
-                        throw new InvalidOperationException("Hay una entrada sin tipo de espectador válido.");
-
-                    // El precio SIEMPRE lo calcula el servidor (no confiamos en lo que manda el navegador)
-                    entrada.PrecioFinal = PrecioHelper.CalcularPrecioEntrada(funcion);
+                    await transaction.RollbackAsync();
+                    return null;
                 }
-
-                var total = listaEntradas.Sum(e => e.PrecioFinal ?? 0m);
-
-                // --- Formas de pago ---
-                if (listaPagos.Count == 0)
-                    throw new InvalidOperationException("Indicá al menos una forma de pago.");
-
-                // Si viene una sola forma de pago sin monto, paga el total
-                if (listaPagos.Count == 1 && (listaPagos[0].Monto == null || listaPagos[0].Monto == 0))
-                    listaPagos[0].Monto = total;
-
-                if (listaPagos.Sum(p => p.Monto ?? 0m) != total)
-                    throw new InvalidOperationException($"La suma de las formas de pago no coincide con el total (${total:N2}).");
 
                 // --- Maestro ---
                 venta.FechaHora ??= DateTime.Now;

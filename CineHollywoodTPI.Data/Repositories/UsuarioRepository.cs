@@ -6,10 +6,6 @@ namespace CineHollywoodTPI.Data.Repositories
 {
     public class UsuarioRepository : IUsuarioRepository
     {
-        public const string RolAdministrador = "Administrador";
-        public const string RolCliente = "Cliente";
-        private const int EstadoActivo = 1;
-
         private readonly SistemaCineContext _context;
 
         public UsuarioRepository(SistemaCineContext context)
@@ -33,96 +29,35 @@ namespace CineHollywoodTPI.Data.Repositories
             return await _context.Usuarios.AnyAsync(u => u.Email!.ToLower() == normalizado);
         }
 
-        public async Task<int?> GetIdRolAsync(string nombreRol)
-        {
-            return await _context.RolUsuarios
+        public async Task<int?> GetIdRolAsync(string nombreRol) =>
+            await _context.RolUsuarios
                 .Where(r => r.Nombre == nombreRol)
                 .Select(r => (int?)r.IdRol)
                 .FirstOrDefaultAsync();
-        }
 
-        public async Task<Usuario> RegistrarClienteAsync(Persona datosPersona, string email, string passwordHash)
+        public async Task<bool> ExisteUsuarioConRolAsync(int idRol) =>
+            await _context.Usuarios.AnyAsync(u => u.IdRol == idRol);
+
+        public async Task<Persona?> GetPersonaPorDniAsync(string nroDocumento) =>
+            await _context.Personas
+                .Include(p => p.Cliente)
+                .Include(p => p.Usuario)
+                .FirstOrDefaultAsync(p => p.NroDocumento == nroDocumento);
+
+        public async Task AgregarAsync(Usuario usuario)
         {
-            var idRolCliente = await GetIdRolAsync(RolCliente)
-                ?? throw new InvalidOperationException($"No existe el rol '{RolCliente}' en la tabla ROL_USUARIO.");
-
             await using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                // ¿Ya existe la persona (por DNI)? Ej: un cliente cargado antes en boletería
-                var persona = await _context.Personas
-                    .Include(p => p.Cliente)
-                    .Include(p => p.Usuario)
-                    .FirstOrDefaultAsync(p => p.NroDocumento == datosPersona.NroDocumento);
-
-                if (persona?.Usuario != null)
-                    throw new InvalidOperationException("Ya existe una cuenta registrada con ese DNI.");
-
-                if (persona == null)
-                {
-                    persona = datosPersona;
-                    _context.Personas.Add(persona);
-                }
-                else
-                {
-                    persona.Nombre = datosPersona.Nombre;
-                    persona.Apellido = datosPersona.Apellido;
-                    persona.FechaNacimiento ??= datosPersona.FechaNacimiento;
-                }
-
-                if (persona.Cliente == null)
-                {
-                    persona.Cliente = new Cliente { Activo = true, EsJubilado = false };
-                }
-                else
-                {
-                    persona.Cliente.Activo = true;
-                }
-
-                var usuario = new Usuario
-                {
-                    IdPersonaNavigation = persona,
-                    IdRol = idRolCliente,
-                    Email = email.Trim().ToLower(),
-                    PasswordHash = passwordHash,
-                    IdEstadoUsuario = EstadoActivo,
-                    FechaRegistro = DateTime.Now
-                };
                 _context.Usuarios.Add(usuario);
-
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
-
-                // Recargamos con rol y cliente para devolverlo completo
-                return (await GetByEmailAsync(usuario.Email))!;
             }
             catch
             {
                 await transaction.RollbackAsync();
                 throw;
             }
-        }
-
-        public async Task<bool> CrearAdminSiNoExisteAsync(string email, string passwordHash)
-        {
-            var idRolAdmin = await GetIdRolAsync(RolAdministrador);
-            if (idRolAdmin == null) return false;
-
-            if (await _context.Usuarios.AnyAsync(u => u.IdRol == idRolAdmin))
-                return false;
-
-            _context.Usuarios.Add(new Usuario
-            {
-                IdPersonaNavigation = new Persona { Nombre = "Admin", Apellido = "Sistema" },
-                IdRol = idRolAdmin,
-                Email = email.Trim().ToLower(),
-                PasswordHash = passwordHash,
-                IdEstadoUsuario = EstadoActivo,
-                FechaRegistro = DateTime.Now
-            });
-
-            await _context.SaveChangesAsync();
-            return true;
         }
     }
 }

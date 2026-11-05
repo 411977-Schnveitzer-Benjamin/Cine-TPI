@@ -1,9 +1,10 @@
 /* =========================================================================
    api.js - Configuración, sesión (JWT), llamadas a la API y utilidades
-   Se carga en TODAS las páginas antes que cualquier otro script.
+   Se carga en TODAS las páginas antes que cualquier otro script propio.
+   Requiere: Bootstrap (bundle) y SweetAlert2 cargados antes.
    ========================================================================= */
 
-// Dirección de la API (proyecto CineHollywoodTPI.API, perfil "http" o "https")
+// Dirección de la API (proyecto CineHollywoodTPI.API)
 const API_URL = 'http://localhost:5191/api';
 
 /* ---------------------------------------------------------------------
@@ -27,13 +28,8 @@ const Auth = {
         }
     },
 
-    guardar(respuestaLogin) {
-        localStorage.setItem(this.CLAVE, JSON.stringify(respuestaLogin));
-    },
-
-    cerrar() {
-        localStorage.removeItem(this.CLAVE);
-    },
+    guardar(respuestaLogin) { localStorage.setItem(this.CLAVE, JSON.stringify(respuestaLogin)); },
+    cerrar() { localStorage.removeItem(this.CLAVE); },
 
     get token() { return this.sesion?.token ?? null; },
     estaLogueado() { return !!this.sesion; },
@@ -41,7 +37,8 @@ const Auth = {
 };
 
 /* ---------------------------------------------------------------------
-   FETCH a la API: agrega el token, convierte la respuesta y los errores
+   FETCH a la API (async/await): agrega el token, convierte la respuesta
+   y transforma los errores HTTP en excepciones con el mensaje de la API
    --------------------------------------------------------------------- */
 async function api(ruta, { method = 'GET', body } = {}) {
     const esArchivo = body instanceof FormData; // subida de archivos (multipart)
@@ -64,13 +61,13 @@ async function api(ruta, { method = 'GET', body } = {}) {
     let datos = null;
     try { datos = texto ? JSON.parse(texto) : null; } catch { datos = texto; }
 
-    if (resp.ok) return datos;
+    if (resp.ok) return datos; // 200, 201, 204...
 
     if (resp.status === 401 && Auth.estaLogueado()) {
         Auth.cerrar();
         throw new Error('Tu sesión expiró. Volvé a iniciar sesión.');
     }
-    if (resp.status === 403) throw new Error('No tenés permisos para realizar esta acción.');
+    if (resp.status === 403 && !datos) throw new Error('No tenés permisos para realizar esta acción.');
 
     throw new Error(mensajeDeError(datos) || `Error ${resp.status}`);
 }
@@ -113,17 +110,17 @@ function esc(valor) {
 /* ---------------------------------------------------------------------
    PÓSTER: imagen real (PosterUrl) o uno generado con el título
    --------------------------------------------------------------------- */
-function hueDesdeTexto(texto) {
-    let h = 0;
-    for (const c of String(texto)) h = (h * 31 + c.charCodeAt(0)) % 360;
-    return h;
-}
-
 // Los pósters guardados en el servidor vienen como "/posters/x.jpg": se sirven desde la API
 const API_ORIGEN = new URL(API_URL).origin;
 function urlPoster(posterUrl) {
     if (!posterUrl) return null;
     return posterUrl.startsWith('/') ? API_ORIGEN + posterUrl : posterUrl;
+}
+
+function hueDesdeTexto(texto) {
+    let h = 0;
+    for (const c of String(texto)) h = (h * 31 + c.charCodeAt(0)) % 360;
+    return h;
 }
 
 function posterHTML(pelicula, ribbon = '') {
@@ -133,54 +130,52 @@ function posterHTML(pelicula, ribbon = '') {
     const img = src
         ? `<img src="${esc(src)}" alt="Póster de ${titulo}" loading="lazy" onerror="this.remove()">`
         : '';
-    const cinta = ribbon ? `<span class="poster-ribbon">${esc(ribbon)}</span>` : '';
-    // El generado queda debajo: si la imagen falla se elimina y se ve el generado
+    const cinta = ribbon ? `<span class="poster-ribbon badge rounded-pill text-bg-primary">${esc(ribbon)}</span>` : '';
     return `<div class="poster">${generado}${img}${cinta}</div>`;
 }
 
+// Badge de Bootstrap según la clasificación
 function badgeClasificacion(desc) {
-    if (!desc) return '<span class="badge">Sin calificar</span>';
-    const clase = desc === 'ATP' ? 'badge-success' : (desc.includes('18') || desc.includes('16') ? 'badge-danger' : 'badge-warning');
+    if (!desc) return '<span class="badge text-bg-secondary">Sin calificar</span>';
+    const clase = desc === 'ATP' ? 'text-bg-success' : (desc.includes('18') || desc.includes('16') ? 'text-bg-danger' : 'text-bg-warning');
     return `<span class="badge ${clase}">${esc(desc)}</span>`;
 }
 
 /* ---------------------------------------------------------------------
    ALERTAS con SweetAlert2 (https://sweetalert2.github.io)
-   Si la librería no cargó (sin internet) se usa un aviso simple.
    --------------------------------------------------------------------- */
 const ICONO_SWAL = { success: 'success', error: 'error', warning: 'warning', info: 'info' };
 
-// Colores del tema actual para que las alertas combinen con el modo claro/oscuro
+// Colores del tema actual. Si hay un modal de Bootstrap abierto, la alerta se dibuja
+// dentro de él (si no, el modal le "roba" el foco a los botones de la alerta).
 function opcionesSwal() {
     const cs = getComputedStyle(document.documentElement);
     return {
-        background: cs.getPropertyValue('--clr-surface').trim(),
-        color: cs.getPropertyValue('--clr-text').trim(),
-        confirmButtonColor: cs.getPropertyValue('--clr-primary').trim(),
-        cancelButtonColor: cs.getPropertyValue('--clr-surface-2').trim()
+        target: document.querySelector('.modal.show') ?? 'body',
+        background: cs.getPropertyValue('--cine-surface').trim(),
+        color: cs.getPropertyValue('--bs-body-color').trim(),
+        confirmButtonColor: cs.getPropertyValue('--cine-primary').trim(),
+        cancelButtonColor: cs.getPropertyValue('--bs-tertiary-bg').trim()
     };
 }
 
 // Notificación chica en la esquina (no bloquea)
 function toast(mensaje, tipo = 'info', ms = 4000) {
-    if (window.Swal) {
-        Swal.fire({
-            ...opcionesSwal(),
-            toast: true,
-            position: 'bottom-end',
-            icon: ICONO_SWAL[tipo] ?? 'info',
-            title: mensaje,
-            showConfirmButton: false,
-            timer: ms,
-            timerProgressBar: true,
-            didOpen: t => {
-                t.addEventListener('mouseenter', Swal.stopTimer);
-                t.addEventListener('mouseleave', Swal.resumeTimer);
-            }
-        });
-        return;
-    }
-    toastSimple(mensaje, tipo, ms);
+    if (!window.Swal) { alert(mensaje); return; }
+    Swal.fire({
+        ...opcionesSwal(),
+        toast: true,
+        position: 'bottom-end',
+        icon: ICONO_SWAL[tipo] ?? 'info',
+        title: mensaje,
+        showConfirmButton: false,
+        timer: ms,
+        timerProgressBar: true,
+        didOpen: t => {
+            t.addEventListener('mouseenter', Swal.stopTimer);
+            t.addEventListener('mouseleave', Swal.resumeTimer);
+        }
+    });
 }
 
 // Alerta centrada con botón "Aceptar"
@@ -201,7 +196,7 @@ async function confirmar(titulo, texto = '', { textoConfirmar = 'Sí, confirmar'
         showCancelButton: true,
         confirmButtonText: textoConfirmar,
         cancelButtonText: 'Cancelar',
-        confirmButtonColor: peligroso ? '#ef4444' : opciones.confirmButtonColor,
+        confirmButtonColor: peligroso ? '#dc3545' : opciones.confirmButtonColor,
         customClass: peligroso ? { confirmButton: 'swal-peligro' } : {},
         reverseButtons: true,
         focusCancel: peligroso
@@ -209,72 +204,53 @@ async function confirmar(titulo, texto = '', { textoConfirmar = 'Sí, confirmar'
     return r.isConfirmed;
 }
 
-function toastSimple(mensaje, tipo = 'info', ms = 4000) {
-    let cont = document.querySelector('.toast-container');
-    if (!cont) {
-        cont = document.createElement('div');
-        cont.className = 'toast-container';
-        cont.setAttribute('role', 'status');
-        cont.setAttribute('aria-live', 'polite');
-        document.body.appendChild(cont);
-    }
-    const t = document.createElement('div');
-    t.className = `toast toast-${tipo}`;
-    t.textContent = mensaje;
-    cont.appendChild(t);
-    setTimeout(() => t.remove(), ms);
-}
-
 /* ---------------------------------------------------------------------
-   MODALES
+   MODALES de Bootstrap
    --------------------------------------------------------------------- */
 function abrirModal(id) {
-    const m = document.getElementById(id);
-    m.classList.add('active');
-    m.querySelector('input:not([type=hidden]), select, textarea')?.focus();
+    bootstrap.Modal.getOrCreateInstance(document.getElementById(id)).show();
 }
 function cerrarModal(id) {
-    document.getElementById(id).classList.remove('active');
+    bootstrap.Modal.getOrCreateInstance(document.getElementById(id)).hide();
 }
-// Cerrar con Escape o clic en el fondo
-document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') document.querySelectorAll('.modal.active').forEach(m => m.classList.remove('active'));
-});
-document.addEventListener('mousedown', e => {
-    if (e.target.classList?.contains('modal')) e.target.classList.remove('active');
-});
-document.addEventListener('click', e => {
-    const btn = e.target.closest('[data-cerrar-modal]');
-    if (btn) cerrarModal(btn.dataset.cerrarModal);
+// Al abrirse un modal, el foco va al primer campo
+document.addEventListener('shown.bs.modal', e => {
+    e.target.querySelector('input:not([type=hidden]):not([disabled]), select:not([disabled]), textarea')?.focus();
 });
 
 /* ---------------------------------------------------------------------
-   TEMA CLARO / OSCURO
+   TEMA CLARO / OSCURO (usa el atributo data-bs-theme de Bootstrap 5.3)
    --------------------------------------------------------------------- */
 const Tema = {
     actual() { return localStorage.getItem('cine_tema') || 'dark'; },
     aplicar(tema) {
-        document.documentElement.dataset.theme = tema;
+        document.documentElement.setAttribute('data-bs-theme', tema);
         localStorage.setItem('cine_tema', tema);
         document.dispatchEvent(new CustomEvent('tema-cambiado', { detail: tema }));
     },
     alternar() { this.aplicar(this.actual() === 'dark' ? 'light' : 'dark'); }
 };
-document.documentElement.dataset.theme = Tema.actual();
-
-// Mensajes de "cargando" / "vacío" reutilizables
-const htmlCargando = (texto = 'Cargando...') => `<div class="cargando"><div class="spinner"></div>${esc(texto)}</div>`;
-const htmlVacio = texto => `<div class="estado-vacio">${esc(texto)}</div>`;
+document.documentElement.setAttribute('data-bs-theme', Tema.actual());
 
 /* ---------------------------------------------------------------------
-   DETALLE DE UNA VENTA (comprobante, "Mis compras" y panel de admin)
+   HTML reutilizable
    --------------------------------------------------------------------- */
+const htmlCargando = (texto = 'Cargando...') =>
+    `<div class="col-12 text-center text-body-secondary py-4">
+        <div class="spinner-border text-primary mb-2" role="status"></div>
+        <div>${esc(texto)}</div>
+    </div>`;
+
+const htmlVacio = texto =>
+    `<div class="col-12"><div class="text-center text-body-secondary border border-dashed rounded-3 py-5 px-3">${esc(texto)}</div></div>`;
+
+// Tabla con el detalle (entradas) de una venta: comprobante, "Mis compras" y panel de admin
 function htmlDetalleVenta(v) {
     return `
-        <h3 style="margin-top:1.5rem">Venta #${v.idVenta} · ${fmtFechaHora(v.fechaHora)}</h3>
-        <p class="text-muted">${esc(v.cliente ?? '')} · ${esc(v.canal ?? '')} · ${esc(v.formasPago ?? '')}</p>
-        <div class="table-wrap"><table class="table">
-            <thead><tr><th>Película</th><th>Función</th><th>Sala</th><th>Butaca</th><th>Tipo</th><th class="num">Precio</th></tr></thead>
+        <h5 class="mt-3">Venta #${v.idVenta} · ${fmtFechaHora(v.fechaHora)}</h5>
+        <p class="text-body-secondary">${esc(v.cliente ?? '')} · ${esc(v.canal ?? '')} · ${esc(v.formasPago ?? '')}</p>
+        <div class="table-responsive"><table class="table table-sm align-middle">
+            <thead><tr><th>Película</th><th>Función</th><th>Sala</th><th>Butaca</th><th>Tipo</th><th class="text-end">Precio</th></tr></thead>
             <tbody>${v.entradas.map(e => `
                 <tr>
                     <td>${esc(e.pelicula)}</td>
@@ -282,9 +258,9 @@ function htmlDetalleVenta(v) {
                     <td>${esc(e.sala)}</td>
                     <td>${esc(e.butaca)}</td>
                     <td>${esc(e.tipoEspectador)}</td>
-                    <td class="num">${fmtMoneda(e.precioFinal)}</td>
+                    <td class="text-end">${fmtMoneda(e.precioFinal)}</td>
                 </tr>`).join('')}
             </tbody>
-            <tfoot><tr><th colspan="5">Total</th><th class="num">${fmtMoneda(v.total)}</th></tr></tfoot>
+            <tfoot><tr><th colspan="5">Total</th><th class="text-end">${fmtMoneda(v.total)}</th></tr></tfoot>
         </table></div>`;
 }
