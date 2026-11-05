@@ -2,18 +2,19 @@ using CineHollywoodTPI.Data.Models;
 
 namespace CineHollywoodTPI.Data.Interfaces
 {
+    // Solo acceso a datos de USUARIO / PERSONA. Las reglas están en AuthService.
     public interface IUsuarioRepository
     {
-        // Trae el usuario con su Persona, Cliente y Rol (para el login / armar el token)
+        // Trae el usuario con su Persona, Cliente, Rol y Estado (para el login / armar el token)
         Task<Usuario?> GetByEmailAsync(string email);
         Task<bool> EmailExisteAsync(string email);
         Task<int?> GetIdRolAsync(string nombreRol);
+        Task<bool> ExisteUsuarioConRolAsync(int idRol);
 
-        // Alta de un cliente que se registra desde la web: PERSONA + CLIENTE + USUARIO en una transacción.
-        // Si ya existe una persona con ese DNI (ej. cargada en boletería) se reutiliza.
-        Task<Usuario> RegistrarClienteAsync(Persona datosPersona, string email, string passwordHash);
+        // Persona por DNI con su Cliente y su Usuario (para reutilizarla al registrarse)
+        Task<Persona?> GetPersonaPorDniAsync(string nroDocumento);
 
-        // Crea el usuario administrador inicial si todavía no hay ninguno
-        Task<bool> CrearAdminSiNoExisteAsync(string email, string passwordHash);
+        // Guarda el usuario (y su persona/cliente si son nuevos o se modificaron) en una transacción
+        Task AgregarAsync(Usuario usuario);
     }
 }

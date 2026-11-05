@@ -1,0 +1,468 @@
+{
+  "info": {
+    "name": "Cines Hollywood API",
+    "description": "Colección para probar la API del TPI Cines Hollywood.\n\nCÓMO USARLA\n1. Levantar el proyecto CineHollywoodTPI.API (http://localhost:5191).\n2. Importar este archivo en Postman (Import > File).\n3. Ejecutar primero 'Auth > Login admin': guarda el token en la variable {{token}} y todas las demás requests lo usan solas.\n4. Se puede correr todo junto con el Runner (botón Run en la colección): las requests están ordenadas y se pasan los ids entre sí con variables.\n\nCada request tiene tests que verifican el código HTTP esperado (200, 201, 400, 401, 403, 404, 409).\n\nOJO: correr la colección completa CREA datos de prueba (película, sala, función, cliente, venta y un precio a futuro). Al final, la carpeta 'Limpieza' da de baja lo que se puede.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ]
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5191/api" },
+    { "key": "adminEmail", "value": "admin@cinehollywood.com" },
+    { "key": "adminPassword", "value": "Admin123!" },
+    { "key": "token", "value": "" },
+    { "key": "tokenCliente", "value": "" },
+    { "key": "idPelicula", "value": "" },
+    { "key": "idSala", "value": "" },
+    { "key": "idFuncion", "value": "" },
+    { "key": "idButaca", "value": "" },
+    { "key": "idCliente", "value": "" },
+    { "key": "idVenta", "value": "" },
+    { "key": "idPrecio", "value": "" },
+    { "key": "manana", "value": "" },
+    { "key": "fechaPrecio", "value": "" },
+    { "key": "sufijo", "value": "" }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Fechas y un sufijo único para no repetir DNI/emails/nombres entre corridas",
+          "const f = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;",
+          "const manana = new Date(); manana.setDate(manana.getDate() + 1);",
+          "const lejos = new Date(); lejos.setDate(lejos.getDate() + 400);",
+          "pm.collectionVariables.set('manana', f(manana));",
+          "pm.collectionVariables.set('fechaPrecio', f(lejos));",
+          "if (!pm.collectionVariables.get('sufijo')) pm.collectionVariables.set('sufijo', String(Date.now()).slice(-8));"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Auth",
+      "item": [
+        {
+          "name": "Login admin (guarda el token)",
+          "event": [ { "listen": "prerequest", "script": { "type": "text/javascript", "exec": [
+            "// Sufijo nuevo en cada corrida: así los DNI, emails y nombres de prueba no se repiten",
+            "pm.collectionVariables.set('sufijo', String(Date.now()).slice(-8));"
+          ] } }, { "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));",
+            "const r = pm.response.json();",
+            "pm.test('Devuelve token y rol Administrador', () => { pm.expect(r.token).to.be.a('string'); pm.expect(r.rol).to.eql('Administrador'); });",
+            "pm.collectionVariables.set('token', r.token);"
+          ] } } ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "Login con contraseña incorrecta → 401",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('401 Unauthorized', () => pm.response.to.have.status(401));"
+          ] } } ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"incorrecta\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "Registro de cliente → 201 (guarda tokenCliente)",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('201 Created', () => pm.response.to.have.status(201));",
+            "const r = pm.response.json();",
+            "pm.test('Rol Cliente', () => pm.expect(r.rol).to.eql('Cliente'));",
+            "pm.collectionVariables.set('tokenCliente', r.token);"
+          ] } } ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Cliente\",\n  \"apellido\": \"Postman\",\n  \"nroDocumento\": \"7{{sufijo}}\",\n  \"fechaNacimiento\": \"1990-05-10\",\n  \"email\": \"postman{{sufijo}}@mail.com\",\n  \"password\": \"secreto1\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/auth/registro"
+          }
+        },
+        {
+          "name": "Registro con email repetido → 409",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('409 Conflict', () => pm.response.to.have.status(409));"
+          ] } } ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Otro\",\n  \"apellido\": \"Postman\",\n  \"nroDocumento\": \"8{{sufijo}}\",\n  \"email\": \"postman{{sufijo}}@mail.com\",\n  \"password\": \"secreto1\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/auth/registro"
+          }
+        },
+        {
+          "name": "Datos del token (yo)",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));"
+          ] } } ],
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/auth/yo" }
+        }
+      ]
+    },
+    {
+      "name": "2. Catálogos (públicos)",
+      "item": [
+        { "name": "Clasificaciones", "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('200 OK', () => pm.response.to.have.status(200));" ] } } ], "request": { "auth": { "type": "noauth" }, "method": "GET", "header": [], "url": "{{baseUrl}}/catalogo/clasificaciones" } },
+        { "name": "Formatos", "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('200 OK', () => pm.response.to.have.status(200));" ] } } ], "request": { "auth": { "type": "noauth" }, "method": "GET", "header": [], "url": "{{baseUrl}}/catalogo/formatos" } },
+        { "name": "Tipos de espectador", "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('200 OK', () => pm.response.to.have.status(200));" ] } } ], "request": { "auth": { "type": "noauth" }, "method": "GET", "header": [], "url": "{{baseUrl}}/catalogo/tipos-espectador" } },
+        { "name": "Formas de pago", "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('200 OK', () => pm.response.to.have.status(200));" ] } } ], "request": { "auth": { "type": "noauth" }, "method": "GET", "header": [], "url": "{{baseUrl}}/catalogo/formas-pago" } },
+        { "name": "Canales de venta", "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('200 OK', () => pm.response.to.have.status(200));" ] } } ], "request": { "auth": { "type": "noauth" }, "method": "GET", "header": [], "url": "{{baseUrl}}/catalogo/canales" } },
+        { "name": "Salas", "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('200 OK', () => pm.response.to.have.status(200));" ] } } ], "request": { "auth": { "type": "noauth" }, "method": "GET", "header": [], "url": "{{baseUrl}}/catalogo/salas" } },
+        { "name": "Tipos de sala", "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('200 OK', () => pm.response.to.have.status(200));" ] } } ], "request": { "auth": { "type": "noauth" }, "method": "GET", "header": [], "url": "{{baseUrl}}/catalogo/tipos-sala" } },
+        { "name": "Promociones", "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('200 OK', () => pm.response.to.have.status(200));" ] } } ], "request": { "auth": { "type": "noauth" }, "method": "GET", "header": [], "url": "{{baseUrl}}/catalogo/promociones" } }
+      ]
+    },
+    {
+      "name": "3. Películas",
+      "item": [
+        { "name": "Listar activas", "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('200 OK', () => pm.response.to.have.status(200));", "pm.test('Es una lista', () => pm.expect(pm.response.json()).to.be.an('array'));" ] } } ], "request": { "auth": { "type": "noauth" }, "method": "GET", "header": [], "url": "{{baseUrl}}/pelicula" } },
+        { "name": "Cartelera", "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('200 OK', () => pm.response.to.have.status(200));" ] } } ], "request": { "auth": { "type": "noauth" }, "method": "GET", "header": [], "url": "{{baseUrl}}/pelicula/cartelera" } },
+        { "name": "Próximos estrenos", "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('200 OK', () => pm.response.to.have.status(200));" ] } } ], "request": { "auth": { "type": "noauth" }, "method": "GET", "header": [], "url": "{{baseUrl}}/pelicula/estrenos" } },
+        { "name": "Buscar por nombre", "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('200 OK', () => pm.response.to.have.status(200));" ] } } ], "request": { "auth": { "type": "noauth" }, "method": "GET", "header": [], "url": "{{baseUrl}}/pelicula/buscar?nombre=shrek" } },
+        {
+          "name": "Crear película → 201 (guarda idPelicula)",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('201 Created', () => pm.response.to.have.status(201));",
+            "pm.test('Header Location', () => pm.response.to.have.header('Location'));",
+            "pm.collectionVariables.set('idPelicula', pm.response.json().id);"
+          ] } } ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"titulo\": \"Película Postman {{sufijo}}\",\n  \"duracionMinutos\": 110,\n  \"idClasificacion\": 2\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/pelicula"
+          }
+        },
+        { "name": "Obtener por id", "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('200 OK', () => pm.response.to.have.status(200));", "pm.test('Es la película creada', () => pm.expect(pm.response.json().idPelicula).to.eql(Number(pm.collectionVariables.get('idPelicula'))));" ] } } ], "request": { "auth": { "type": "noauth" }, "method": "GET", "header": [], "url": "{{baseUrl}}/pelicula/{{idPelicula}}" } },
+        {
+          "name": "Modificar película",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('200 OK', () => pm.response.to.have.status(200));" ] } } ],
+          "request": {
+            "method": "PUT",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"idPelicula\": {{idPelicula}},\n  \"titulo\": \"Película Postman {{sufijo}} (editada)\",\n  \"duracionMinutos\": 115,\n  \"idClasificacion\": 2\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/pelicula/{{idPelicula}}"
+          }
+        },
+        {
+          "name": "Crear sin título → 400",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('400 Bad Request', () => pm.response.to.have.status(400));" ] } } ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"titulo\": \"\",\n  \"duracionMinutos\": 90\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/pelicula"
+          }
+        },
+        { "name": "Obtener inexistente → 404", "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('404 Not Found', () => pm.response.to.have.status(404));" ] } } ], "request": { "auth": { "type": "noauth" }, "method": "GET", "header": [], "url": "{{baseUrl}}/pelicula/999999" } },
+        {
+          "name": "Crear sin token → 401",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('401 Unauthorized', () => pm.response.to.have.status(401));" ] } } ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"titulo\": \"No debería crearse\",\n  \"duracionMinutos\": 90\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/pelicula"
+          }
+        },
+        {
+          "name": "Crear como Cliente → 403",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('403 Forbidden', () => pm.response.to.have.status(403));" ] } } ],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{tokenCliente}}", "type": "string" } ] },
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"titulo\": \"No debería crearse\",\n  \"duracionMinutos\": 90\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/pelicula"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Salas",
+      "item": [
+        { "name": "Listar salas", "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('200 OK', () => pm.response.to.have.status(200));" ] } } ], "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/sala" } },
+        {
+          "name": "Crear sala 3x4 → 201 (guarda idSala)",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('201 Created', () => pm.response.to.have.status(201));",
+            "pm.collectionVariables.set('idSala', pm.response.json().id);"
+          ] } } ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Sala Postman {{sufijo}}\",\n  \"idTipoSala\": 1,\n  \"idComplejo\": 1,\n  \"filas\": 3,\n  \"butacasPorFila\": 4\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/sala"
+          }
+        },
+        {
+          "name": "Crear sala con nombre repetido → 409",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('409 Conflict', () => pm.response.to.have.status(409));" ] } } ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Sala Postman {{sufijo}}\",\n  \"idTipoSala\": 1,\n  \"idComplejo\": 1,\n  \"filas\": 3,\n  \"butacasPorFila\": 4\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/sala"
+          }
+        },
+        {
+          "name": "Crear sala con 30 filas → 400",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('400 Bad Request', () => pm.response.to.have.status(400));" ] } } ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Sala inválida\",\n  \"idTipoSala\": 1,\n  \"idComplejo\": 1,\n  \"filas\": 30,\n  \"butacasPorFila\": 4\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/sala"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Precios",
+      "item": [
+        { "name": "Listar precios", "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('200 OK', () => pm.response.to.have.status(200));" ] } } ], "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/precio" } },
+        {
+          "name": "Programar precio a futuro → 201 (guarda idPrecio)",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('201 Created', () => pm.response.to.have.status(201));",
+            "pm.collectionVariables.set('idPrecio', pm.response.json().id);"
+          ] } } ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"idTipoSala\": 2,\n  \"precio\": 9999,\n  \"fechaDesde\": \"{{fechaPrecio}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/precio"
+          }
+        },
+        {
+          "name": "Precio con fecha pasada → 400",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('400 Bad Request', () => pm.response.to.have.status(400));" ] } } ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"idTipoSala\": 1,\n  \"precio\": 5000,\n  \"fechaDesde\": \"2020-01-01\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/precio"
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Funciones",
+      "item": [
+        { "name": "Listar próximas", "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('200 OK', () => pm.response.to.have.status(200));" ] } } ], "request": { "auth": { "type": "noauth" }, "method": "GET", "header": [], "url": "{{baseUrl}}/funcion?soloProximas=true" } },
+        {
+          "name": "Crear función mañana → 201 (guarda idFuncion)",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('201 Created', () => pm.response.to.have.status(201));",
+            "pm.collectionVariables.set('idFuncion', pm.response.json().id);"
+          ] } } ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"idPelicula\": {{idPelicula}},\n  \"idSala\": {{idSala}},\n  \"idFormato\": 1,\n  \"idPromocion\": null,\n  \"fecha\": \"{{manana}}\",\n  \"horaInicio\": \"20:00:00\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/funcion"
+          }
+        },
+        {
+          "name": "Crear función superpuesta → 409",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('409 Conflict', () => pm.response.to.have.status(409));" ] } } ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"idPelicula\": {{idPelicula}},\n  \"idSala\": {{idSala}},\n  \"idFormato\": 1,\n  \"fecha\": \"{{manana}}\",\n  \"horaInicio\": \"21:00:00\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/funcion"
+          }
+        },
+        {
+          "name": "Crear función en fecha pasada → 400",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('400 Bad Request', () => pm.response.to.have.status(400));" ] } } ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"idPelicula\": {{idPelicula}},\n  \"idSala\": {{idSala}},\n  \"idFormato\": 1,\n  \"fecha\": \"2020-01-01\",\n  \"horaInicio\": \"20:00:00\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/funcion"
+          }
+        },
+        {
+          "name": "Obtener función (precios por tipo de espectador)",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));",
+            "const f = pm.response.json();",
+            "const general = f.precios.find(p => p.idTipoEspectador === 1);",
+            "const jubilado = f.precios.find(p => p.idTipoEspectador === 2);",
+            "pm.test('Jubilado paga 15% menos (función sin promo)', () => pm.expect(jubilado.precio).to.eql(Math.round(general.precio * 0.85 * 100) / 100));"
+          ] } } ],
+          "request": { "auth": { "type": "noauth" }, "method": "GET", "header": [], "url": "{{baseUrl}}/funcion/{{idFuncion}}" }
+        },
+        {
+          "name": "Butacas de la función (guarda una libre)",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));",
+            "const libre = pm.response.json().find(b => !b.ocupada && b.habilitada);",
+            "pm.test('Hay una butaca libre', () => pm.expect(libre).to.exist);",
+            "pm.collectionVariables.set('idButaca', libre.idButaca);"
+          ] } } ],
+          "request": { "auth": { "type": "noauth" }, "method": "GET", "header": [], "url": "{{baseUrl}}/funcion/{{idFuncion}}/butacas" }
+        }
+      ]
+    },
+    {
+      "name": "7. Clientes",
+      "item": [
+        { "name": "Listar clientes", "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('200 OK', () => pm.response.to.have.status(200));" ] } } ], "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/cliente" } },
+        {
+          "name": "Crear cliente → 201 (guarda idCliente)",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('201 Created', () => pm.response.to.have.status(201));",
+            "pm.collectionVariables.set('idCliente', pm.response.json().id);"
+          ] } } ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Boletería\",\n  \"apellido\": \"Postman\",\n  \"nroDocumento\": \"6{{sufijo}}\",\n  \"fechaNacimiento\": \"1955-03-20\",\n  \"esJubilado\": true,\n  \"calle\": \"Av. Siempreviva\",\n  \"altura\": 742\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/cliente"
+          }
+        },
+        {
+          "name": "Modificar cliente",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('200 OK', () => pm.response.to.have.status(200));" ] } } ],
+          "request": {
+            "method": "PUT",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"idCliente\": {{idCliente}},\n  \"nombre\": \"Boletería\",\n  \"apellido\": \"Postman Editado\",\n  \"nroDocumento\": \"6{{sufijo}}\",\n  \"fechaNacimiento\": \"1955-03-20\",\n  \"esJubilado\": true,\n  \"calle\": \"Av. Siempreviva\",\n  \"altura\": 742,\n  \"activo\": true\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/cliente/{{idCliente}}"
+          }
+        },
+        {
+          "name": "Crear cliente con DNI repetido → 409",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('409 Conflict', () => pm.response.to.have.status(409));" ] } } ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Repetido\",\n  \"apellido\": \"Postman\",\n  \"nroDocumento\": \"6{{sufijo}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/cliente"
+          }
+        },
+        {
+          "name": "Crear cliente con DNI inválido → 400",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('400 Bad Request', () => pm.response.to.have.status(400));" ] } } ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Malo\",\n  \"apellido\": \"Postman\",\n  \"nroDocumento\": \"12ab\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/cliente"
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Ventas (transacción maestro-detalle)",
+      "item": [
+        {
+          "name": "Registrar venta en boletería → 201 (guarda idVenta)",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('201 Created', () => pm.response.to.have.status(201));",
+            "pm.collectionVariables.set('idVenta', pm.response.json().idVenta);"
+          ] } } ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"idCliente\": {{idCliente}},\n  \"idCanal\": 1,\n  \"entradas\": [\n    { \"idFuncion\": {{idFuncion}}, \"idButaca\": {{idButaca}}, \"idTipoEspectador\": 2 }\n  ],\n  \"formasPago\": [ { \"idFormaPago\": 1 } ]\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/venta"
+          }
+        },
+        {
+          "name": "Vender la misma butaca otra vez → 409",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('409 Conflict', () => pm.response.to.have.status(409));" ] } } ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"idCliente\": {{idCliente}},\n  \"entradas\": [\n    { \"idFuncion\": {{idFuncion}}, \"idButaca\": {{idButaca}}, \"idTipoEspectador\": 1 }\n  ],\n  \"formasPago\": [ { \"idFormaPago\": 1 } ]\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/venta"
+          }
+        },
+        {
+          "name": "Venta sin entradas → 400",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('400 Bad Request', () => pm.response.to.have.status(400));" ] } } ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"idCliente\": {{idCliente}},\n  \"entradas\": [],\n  \"formasPago\": [ { \"idFormaPago\": 1 } ]\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/venta"
+          }
+        },
+        {
+          "name": "Detalle de la venta (precio con 15%)",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));",
+            "const v = pm.response.json();",
+            "pm.test('Tiene 1 entrada de Jubilado', () => { pm.expect(v.entradas.length).to.eql(1); pm.expect(v.entradas[0].tipoEspectador).to.eql('Jubilado'); });"
+          ] } } ],
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/venta/{{idVenta}}" }
+        },
+        {
+          "name": "Cliente pide una venta ajena → 403",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('403 Forbidden', () => pm.response.to.have.status(403));" ] } } ],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{tokenCliente}}", "type": "string" } ] },
+            "method": "GET", "header": [], "url": "{{baseUrl}}/venta/{{idVenta}}"
+          }
+        },
+        { "name": "Listar ventas", "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('200 OK', () => pm.response.to.have.status(200));" ] } } ], "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/venta" } },
+        { "name": "Totales del negocio", "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('200 OK', () => pm.response.to.have.status(200));" ] } } ], "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/venta/totales" } },
+        {
+          "name": "Cancelar función con ventas → 400",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('400 Bad Request', () => pm.response.to.have.status(400));" ] } } ],
+          "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/funcion/{{idFuncion}}" }
+        },
+        {
+          "name": "Cambiar hora de función con ventas → 400",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('400 Bad Request', () => pm.response.to.have.status(400));" ] } } ],
+          "request": {
+            "method": "PUT",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"idFuncion\": {{idFuncion}},\n  \"idPelicula\": {{idPelicula}},\n  \"idSala\": {{idSala}},\n  \"idFormato\": 1,\n  \"fecha\": \"{{manana}}\",\n  \"horaInicio\": \"22:30:00\",\n  \"activo\": true\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/funcion/{{idFuncion}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Reportes",
+      "item": [
+        { "name": "Películas más vendidas", "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('200 OK', () => pm.response.to.have.status(200));" ] } } ], "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/reporte/peliculas-mas-vendidas?top=5" } },
+        { "name": "Ventas mes a mes", "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('200 OK', () => pm.response.to.have.status(200));", "pm.test('Devuelve los 12 meses', () => pm.expect(pm.response.json().length).to.eql(12));" ] } } ], "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/reporte/ventas-mensuales?anio=2026" } },
+        { "name": "Años con ventas", "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('200 OK', () => pm.response.to.have.status(200));" ] } } ], "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/reporte/anios" } },
+        { "name": "Top inválido → 400", "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('400 Bad Request', () => pm.response.to.have.status(400));" ] } } ], "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/reporte/peliculas-mas-vendidas?top=99" } },
+        { "name": "Reportes como Cliente → 403", "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('403 Forbidden', () => pm.response.to.have.status(403));" ] } } ], "request": { "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{tokenCliente}}", "type": "string" } ] }, "method": "GET", "header": [], "url": "{{baseUrl}}/reporte/anios" } }
+      ]
+    },
+    {
+      "name": "10. Limpieza (bajas)",
+      "item": [
+        { "name": "Eliminar precio programado (baja física)", "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('200 OK', () => pm.response.to.have.status(200));" ] } } ], "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/precio/{{idPrecio}}" } },
+        { "name": "Dar de baja la película (baja lógica)", "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('200 OK', () => pm.response.to.have.status(200));" ] } } ], "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/pelicula/{{idPelicula}}" } },
+        { "name": "Dar de baja el cliente (baja lógica)", "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('200 OK', () => pm.response.to.have.status(200));" ] } } ], "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/cliente/{{idCliente}}" } },
+        { "name": "Dar de baja otra vez → 404", "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('404 Not Found', () => pm.response.to.have.status(404));" ] } } ], "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/cliente/{{idCliente}}" } }
+      ]
+    }
+  ]
+}

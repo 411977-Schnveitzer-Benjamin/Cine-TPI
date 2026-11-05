@@ -912,6 +912,10 @@ INSERT [dbo].[CLASIFICACION] ([id_clasificacion], [descripcion]) VALUES (1, N'+1
 GO
 INSERT [dbo].[CLASIFICACION] ([id_clasificacion], [descripcion]) VALUES (2, N'ATP')
 GO
+INSERT [dbo].[CLASIFICACION] ([id_clasificacion], [descripcion]) VALUES (3, N'+16')
+GO
+INSERT [dbo].[CLASIFICACION] ([id_clasificacion], [descripcion]) VALUES (4, N'+18')
+GO
 SET IDENTITY_INSERT [dbo].[CLASIFICACION] OFF
 GO
 SET IDENTITY_INSERT [dbo].[CATEGORIA_PRODUCTO] ON 
@@ -969,7 +973,9 @@ SET IDENTITY_INSERT [dbo].[TIPO_ESPECTADOR] ON
 GO
 INSERT [dbo].[TIPO_ESPECTADOR] ([id_tipo_espectador], [descripcion]) VALUES (1, N'General')
 GO
-INSERT [dbo].[TIPO_ESPECTADOR] ([id_tipo_espectador], [descripcion]) VALUES (2, N'Jubilado / Menor')
+INSERT [dbo].[TIPO_ESPECTADOR] ([id_tipo_espectador], [descripcion]) VALUES (2, N'Jubilado')
+GO
+INSERT [dbo].[TIPO_ESPECTADOR] ([id_tipo_espectador], [descripcion]) VALUES (3, N'Menor')
 GO
 SET IDENTITY_INSERT [dbo].[TIPO_ESPECTADOR] OFF
 GO

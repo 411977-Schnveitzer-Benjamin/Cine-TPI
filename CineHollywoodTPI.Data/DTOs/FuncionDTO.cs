@@ -20,7 +20,23 @@ namespace CineHollywoodTPI.Data.DTOs
         public string? PromocionDescripcion { get; set; }
         public decimal? PorcentajeDescuento { get; set; }
 
-        // Precio de la entrada ya calculado (precio de la sala con la promoción aplicada)
+        public string? Clasificacion { get; set; }
+        public bool EsParaMayores { get; set; }          // película +18
+        public bool TieneEntradasVendidas { get; set; }  // si es true no se puede mover ni cancelar
+
+        // Precio de la entrada "General" ya calculado (precio de la sala con la promoción aplicada)
         public decimal PrecioEntrada { get; set; }
+
+        // Precio final según el tipo de espectador (General, Jubilado, Menor...), lo calcula el servidor
+        public List<PrecioPorTipoDTO> Precios { get; set; } = new();
+    }
+
+    public class PrecioPorTipoDTO
+    {
+        public int IdTipoEspectador { get; set; }
+        public string? TipoEspectador { get; set; }
+        public decimal Precio { get; set; }
+        public string? Descuento { get; set; } // texto: "Promo 2x1 (-50%)", "Jubilado / Menor (-15%)" o null
+        public bool Permitido { get; set; } = true; // false: ej. "Menor" en una película +18
     }
 }

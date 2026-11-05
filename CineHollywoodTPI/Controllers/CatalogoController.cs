@@ -1,16 +1,16 @@
-using CineHollywoodTPI.Data.Interfaces;
+using CineHollywoodTPI.API.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CineHollywoodTPI.API.Controllers
 {
-    // Endpoints de solo lectura para llenar los combos (select) del frontend. Son públicos.
+    // Listas de solo lectura para los combos del frontend. Son públicas.
     [ApiController]
     [Route("api/[controller]")]
     public class CatalogoController : ControllerBase
     {
-        private readonly ICatalogoRepository _catalogo;
+        private readonly ICatalogoService _catalogo;
 
-        public CatalogoController(ICatalogoRepository catalogo)
+        public CatalogoController(ICatalogoService catalogo)
         {
             _catalogo = catalogo;
         }
