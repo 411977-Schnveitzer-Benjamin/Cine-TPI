@@ -1,0 +1,2 @@
+En esta carpeta la API guarda los pósters de las películas (subidos desde el panel o descargados desde un link).
+Se sirven en http://localhost:5191/posters/<archivo>. No borrar la carpeta.

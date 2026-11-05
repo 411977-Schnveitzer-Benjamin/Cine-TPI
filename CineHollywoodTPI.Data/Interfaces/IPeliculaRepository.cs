@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using CineHollywoodTPI.Data.Models;
+﻿using CineHollywoodTPI.Data.Models;
 
 namespace CineHollywoodTPI.Data.Interfaces
 {
@@ -11,6 +6,8 @@ namespace CineHollywoodTPI.Data.Interfaces
     {
         Task<IEnumerable<Pelicula>> GetAllActiveAsync(); // Trae solo las películas con activo = 1
         Task<IEnumerable<Pelicula>> GetByNombreAsync(string nombre);
+        Task<IEnumerable<Pelicula>> GetEnCarteleraAsync(DateOnly desde); // Activas con funciones desde esa fecha
+        Task<IEnumerable<Pelicula>> GetProximosEstrenosAsync(DateOnly desde); // Activas SIN funciones desde esa fecha
         Task<Pelicula?> GetByIdAsync(int id);
         Task<bool> AddAsync(Pelicula pelicula);
         Task<bool> UpdateAsync(Pelicula pelicula);

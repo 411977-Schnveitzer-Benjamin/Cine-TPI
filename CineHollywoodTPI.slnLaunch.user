@@ -3,11 +3,11 @@
     "Name": "Nuevo perfil",
     "Projects": [
       {
-        "Path": "CineHollywoodTPI\\CineHollywoodTPI.API.csproj",
+        "Path": "CineHollywoodTPI.Web\\CineHollywoodTPI.Web.csproj",
         "Action": "Start"
       },
       {
-        "Path": "CineHollywoodTPI.Web\\CineHollywoodTPI.Web.csproj",
+        "Path": "CineHollywoodTPI\\CineHollywoodTPI.API.csproj",
         "Action": "Start"
       }
     ]

@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using CineHollywoodTPI.Data.Interfaces;
 using CineHollywoodTPI.Data.DTOs;
-using CineHollywoodTPI.Data.Models; // Asegúrate de que este using apunte a tus modelos mapeados
+using CineHollywoodTPI.Data.Models;
+using CineHollywoodTPI.API.Services;
 
 namespace CineHollywoodTPI.API.Controllers
 {
@@ -10,36 +12,45 @@ namespace CineHollywoodTPI.API.Controllers
     public class PeliculaController : ControllerBase
     {
         private readonly IPeliculaRepository _peliculaRepository;
+        private readonly PosterService _posterService;
 
-        // Inyectamos el repositorio registrado en el Program.cs
-        public PeliculaController(IPeliculaRepository peliculaRepository)
+        public PeliculaController(IPeliculaRepository peliculaRepository, PosterService posterService)
         {
             _peliculaRepository = peliculaRepository;
+            _posterService = posterService;
+        }
+
+        private static PeliculaDTO ToDto(Pelicula p) => new()
+        {
+            IdPelicula = p.IdPelicula,
+            Titulo = p.Titulo ?? "",
+            DuracionMinutos = p.DuracionMinutos,
+            IdClasificacion = p.IdClasificacion,
+            ClasificacionDescripcion = p.IdClasificacionNavigation?.Descripcion,
+            PosterUrl = p.PosterUrl,
+            Activo = p.Activo
+        };
+
+        private static string? Validar(string? titulo, int? duracion)
+        {
+            if (string.IsNullOrWhiteSpace(titulo)) return "El título es obligatorio.";
+            if (titulo.Length > 200) return "El título no puede superar los 200 caracteres.";
+            if (duracion is null or <= 0 or > 600) return "La duración tiene que estar entre 1 y 600 minutos.";
+            return null;
         }
 
         // ============================================================================
-        // 1. CONSULTA - TRAER TODAS LAS PELÍCULAS ACTIVAS
+        // CONSULTAS (públicas)
         // ============================================================================
+
         // GET: api/pelicula
         [HttpGet]
         public async Task<IActionResult> GetActivas()
         {
             try
             {
-                // Recuerda verificar si en tu contexto o repositorio figura en plural o singular (ej. Pelicula o Peliculas)
                 var peliculas = await _peliculaRepository.GetAllActiveAsync();
-
-                // Mapeamos los modelos pesados de la DB a estructuras DTO livianas para el navegador
-                var listaDto = peliculas.Select(p => new PeliculaDTO
-                {
-                    IdPelicula = p.IdPelicula,
-                    Titulo = p.Titulo,
-                    DuracionMinutos = p.DuracionMinutos,
-                    ClasificacionDescripcion = p.IdClasificacionNavigation?.Descripcion,
-                    Activo = p.Activo
-                });
-
-                return Ok(listaDto); // Retorna código HTTP 200 con el listado JSON
+                return Ok(peliculas.Select(ToDto));
             }
             catch (Exception ex)
             {
@@ -47,9 +58,36 @@ namespace CineHollywoodTPI.API.Controllers
             }
         }
 
-        // ============================================================================
-        // 1.B. CONSULTA - OBTENER UNA PELÍCULA POR SU ID EXACTO
-        // ============================================================================
+        // GET: api/pelicula/cartelera  -> con funciones desde hoy
+        [HttpGet("cartelera")]
+        public async Task<IActionResult> GetCartelera()
+        {
+            try
+            {
+                var peliculas = await _peliculaRepository.GetEnCarteleraAsync(DateOnly.FromDateTime(DateTime.Today));
+                return Ok(peliculas.Select(ToDto));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+            }
+        }
+
+        // GET: api/pelicula/estrenos  -> activas sin funciones programadas
+        [HttpGet("estrenos")]
+        public async Task<IActionResult> GetEstrenos()
+        {
+            try
+            {
+                var peliculas = await _peliculaRepository.GetProximosEstrenosAsync(DateOnly.FromDateTime(DateTime.Today));
+                return Ok(peliculas.Select(ToDto));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+            }
+        }
+
         // GET: api/pelicula/5
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetPorId(int id)
@@ -60,17 +98,7 @@ namespace CineHollywoodTPI.API.Controllers
                 if (p == null || !p.Activo)
                     return NotFound($"No se encontró ninguna película activa con el ID {id}.");
 
-                // Transformamos el resultado único a DTO
-                var dto = new PeliculaDTO
-                {
-                    IdPelicula = p.IdPelicula,
-                    Titulo = p.Titulo,
-                    DuracionMinutos = p.DuracionMinutos,
-                    ClasificacionDescripcion = p.IdClasificacionNavigation?.Descripcion,
-                    Activo = p.Activo
-                };
-
-                return Ok(dto); // Devuelve un objeto JSON único, no una lista
+                return Ok(ToDto(p));
             }
             catch (Exception ex)
             {
@@ -78,9 +106,6 @@ namespace CineHollywoodTPI.API.Controllers
             }
         }
 
-        // ============================================================================
-        // 1.C. CONSULTA - FILTRAR PELÍCULAS POR NOMBRE / TÍTULO
-        // ============================================================================
         // GET: api/pelicula/buscar?nombre=batman
         [HttpGet("buscar")]
         public async Task<IActionResult> GetPorNombre([FromQuery] string nombre)
@@ -91,17 +116,7 @@ namespace CineHollywoodTPI.API.Controllers
                     return BadRequest("El parámetro de búsqueda 'nombre' no puede estar vacío.");
 
                 var peliculas = await _peliculaRepository.GetByNombreAsync(nombre);
-
-                var listaDto = peliculas.Select(p => new PeliculaDTO
-                {
-                    IdPelicula = p.IdPelicula,
-                    Titulo = p.Titulo,
-                    DuracionMinutos = p.DuracionMinutos,
-                    ClasificacionDescripcion = p.IdClasificacionNavigation?.Descripcion,
-                    Activo = p.Activo
-                });
-
-                return Ok(listaDto); // Devuelve la lista de coincidencias
+                return Ok(peliculas.Select(ToDto));
             }
             catch (Exception ex)
             {
@@ -110,9 +125,11 @@ namespace CineHollywoodTPI.API.Controllers
         }
 
         // ============================================================================
-        // 2. ALTA - CREAR UNA NUEVA PELÍCULA
+        // ABM (solo Administrador)
         // ============================================================================
+
         // POST: api/pelicula
+        [Authorize(Roles = "Administrador")]
         [HttpPost]
         public async Task<IActionResult> Crear([FromBody] PeliculaInsertDTO dto)
         {
@@ -121,20 +138,22 @@ namespace CineHollywoodTPI.API.Controllers
                 if (dto == null)
                     return BadRequest("Los datos enviados para la nueva película son inválidos.");
 
-                // Convertimos los datos puros del DTO al modelo formal de la base de datos
+                var error = Validar(dto.Titulo, dto.DuracionMinutos);
+                if (error != null) return BadRequest(error);
+
                 var nuevaPelicula = new Pelicula
                 {
-                    Titulo = dto.Titulo,
+                    Titulo = dto.Titulo.Trim(),
                     DuracionMinutos = dto.DuracionMinutos,
-                    IdClasificacion = dto.IdClasificacion
-                    // El repositorio se encarga de asignarle Activo = true por defecto al insertar
+                    IdClasificacion = dto.IdClasificacion,
+                    PosterUrl = string.IsNullOrWhiteSpace(dto.PosterUrl) ? null : dto.PosterUrl.Trim()
                 };
 
                 var resultado = await _peliculaRepository.AddAsync(nuevaPelicula);
                 if (!resultado)
                     return StatusCode(500, "No se pudo impactar el registro en la base de datos.");
 
-                return Ok(new { mensaje = "Película creada con éxito!" });
+                return Ok(new { mensaje = "Película creada con éxito!", id = nuevaPelicula.IdPelicula });
             }
             catch (Exception ex)
             {
@@ -142,33 +161,33 @@ namespace CineHollywoodTPI.API.Controllers
             }
         }
 
-        // ============================================================================
-        // 3. MODIFICACIÓN - EDITAR UNA PELÍCULA EXISTENTE
-        // ============================================================================
         // PUT: api/pelicula/5
-        [HttpPut("{id}")]
+        [Authorize(Roles = "Administrador")]
+        [HttpPut("{id:int}")]
         public async Task<IActionResult> Modificar(int id, [FromBody] PeliculaUpdateDTO dto)
         {
             try
             {
-                // Validación de seguridad elemental: que el ID de la URL coincida con el ID del cuerpo JSON
                 if (dto == null || id != dto.IdPelicula)
                     return BadRequest("Los identificadores de la petición no coinciden.");
 
-                // Corroboramos si el registro existe físicamente en SQL Server antes de operar
+                var error = Validar(dto.Titulo, dto.DuracionMinutos);
+                if (error != null) return BadRequest(error);
+
                 var peliculaExistente = await _peliculaRepository.GetByIdAsync(id);
                 if (peliculaExistente == null)
                     return NotFound($"No se encontró ninguna película con el ID {id}.");
 
-                // Traspasamos las modificaciones del DTO al modelo original
-                peliculaExistente.Titulo = dto.Titulo;
+                peliculaExistente.Titulo = dto.Titulo.Trim();
                 peliculaExistente.DuracionMinutos = dto.DuracionMinutos;
                 peliculaExistente.IdClasificacion = dto.IdClasificacion;
+                var posterAnterior = peliculaExistente.PosterUrl;
+                peliculaExistente.PosterUrl = string.IsNullOrWhiteSpace(dto.PosterUrl) ? null : dto.PosterUrl.Trim();
 
-                var resultado = await _peliculaRepository.UpdateAsync(peliculaExistente);
-                if (!resultado)
-                    return StatusCode(500, "No se pudieron persistir los cambios de la película.");
+                await _peliculaRepository.UpdateAsync(peliculaExistente);
 
+                if (posterAnterior != peliculaExistente.PosterUrl)
+                    _posterService.BorrarSiEsLocal(posterAnterior);
                 return Ok(new { mensaje = "Película modificada con éxito!" });
             }
             catch (Exception ex)
@@ -178,15 +197,62 @@ namespace CineHollywoodTPI.API.Controllers
         }
 
         // ============================================================================
-        // 4. BAJA LÓGICA - DESACTIVAR UNA PELÍCULA
+        // PÓSTER: la imagen se guarda en el servidor (wwwroot/posters de la API)
         // ============================================================================
-        // DELETE: api/pelicula/5
-        [HttpDelete("{id}")]
+
+        // POST: api/pelicula/5/poster   (multipart/form-data, campo "archivo")
+        [Authorize(Roles = "Administrador")]
+        [HttpPost("{id:int}/poster")]
+        [RequestSizeLimit(6 * 1024 * 1024)]
+        public async Task<IActionResult> SubirPoster(int id, IFormFile archivo)
+        {
+            return await ReemplazarPosterAsync(id, () => _posterService.GuardarArchivoAsync(archivo));
+        }
+
+        // POST: api/pelicula/5/poster-url   { "url": "https://..." }  -> la API descarga la imagen
+        [Authorize(Roles = "Administrador")]
+        [HttpPost("{id:int}/poster-url")]
+        public async Task<IActionResult> DescargarPoster(int id, [FromBody] PosterUrlDTO dto)
+        {
+            return await ReemplazarPosterAsync(id, () => _posterService.DescargarDesdeUrlAsync(dto?.Url ?? ""));
+        }
+
+        private async Task<IActionResult> ReemplazarPosterAsync(int id, Func<Task<string>> guardar)
+        {
+            var pelicula = await _peliculaRepository.GetByIdAsync(id);
+            if (pelicula == null || !pelicula.Activo)
+                return NotFound($"No se encontró ninguna película activa con el ID {id}.");
+
+            try
+            {
+                var anterior = pelicula.PosterUrl;
+                pelicula.PosterUrl = await guardar();
+                await _peliculaRepository.UpdateAsync(pelicula);
+                _posterService.BorrarSiEsLocal(anterior);
+
+                return Ok(new { mensaje = "Póster guardado.", posterUrl = pelicula.PosterUrl });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (HttpRequestException)
+            {
+                return BadRequest("No se pudo descargar la imagen desde ese link. Probá descargarla y subir el archivo.");
+            }
+            catch (TaskCanceledException)
+            {
+                return BadRequest("El sitio de la imagen tardó demasiado en responder. Probá descargarla y subir el archivo.");
+            }
+        }
+
+        // DELETE: api/pelicula/5  (baja lógica)
+        [Authorize(Roles = "Administrador")]
+        [HttpDelete("{id:int}")]
         public async Task<IActionResult> BajaLogica(int id)
         {
             try
             {
-                // Invoca la rutina del repositorio que conmuta el campo BIT activo a 0
                 var resultado = await _peliculaRepository.DeleteLogicoAsync(id);
                 if (!resultado)
                     return NotFound($"No se pudo procesar la baja. No existe la película con ID {id} o ya se encuentra inactiva.");
