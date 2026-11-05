@@ -162,7 +162,6 @@ CineHollywoodTPI.slnx                  ← la solución (3 proyectos)
 |---|---|
 | `SistemaCineBdFinal_actual.sql` | ✅ Script de la base **actual** (estructura + datos). Es el que hay que usar |
 | `SistemaCineBdFinal.sql` | Script viejo, desactualizado (ver sección 1) |
-| `index.html`, `admin.html`, `css/`, `js/`, `img/`… (en la raíz) | **Prototipo viejo** del frontend, de antes de conectar con la API (guardaba todo en `localStorage`). El frontend que se usa es el de `CineHollywoodTPI.Web/wwwroot/`. Se pueden borrar |
 | `CineHollywoodTPI.Controllers/VentaController.cs` | Archivo vacío de una versión vieja; no pertenece a ningún proyecto y se puede borrar |
 
 ---
