@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comprar entradas - Cines Hollywood</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="navbar scrolled">
+        <div class="container navbar-container">
+            <a href="index.html" class="logo">
+                <span class="logo-mark"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="2.5"/><path d="M7 2v20M17 2v20M2 12h20M2 7h5M2 17h5M17 17h5M17 7h5"/></svg></span>
+                <span>Cines <b>Hollywood</b></span>
+            </a>
+            <nav class="nav-links" aria-label="Principal">
+                <a href="cartelera.html" class="nav-link">Cartelera</a>
+                <a href="estrenos.html" class="nav-link">Próximos estrenos</a>
+                <a href="promociones.html" class="nav-link">Promociones</a>
+            </nav>
+            <div class="auth-buttons" id="authArea"></div>
+            <button class="btn btn-icon mobile-menu-btn" id="mobileMenuBtn" aria-label="Abrir menú">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+            </button>
+        </div>
+    </header>
+
+    <main class="container page reserva-layout">
+        <div class="reserva-pelicula" id="peliculaInfo">
+            <div class="cargando"><div class="spinner"></div>Cargando...</div>
+        </div>
+
+        <div id="flujoCompra" hidden>
+            <!-- Paso 1: Función -->
+            <section class="card step-card" id="step1">
+                <h2 class="step-title"><span class="step-number">1</span>Elegí la función</h2>
+                <div id="funcionesLista"></div>
+            </section>
+
+            <!-- Paso 2: Butacas + tipo de espectador -->
+            <section class="card step-card" id="step2" hidden>
+                <h2 class="step-title"><span class="step-number">2</span>Elegí tus butacas</h2>
+                <p class="text-muted" id="funcionElegidaTexto"></p>
+                <div id="mapaButacas"></div>
+                <h3 style="margin-top:1.5rem">Tus entradas</h3>
+                <div class="entradas-detalle" id="entradasDetalle"></div>
+            </section>
+
+            <!-- Paso 3: Pago y confirmación -->
+            <section class="card step-card" id="step3" hidden>
+                <h2 class="step-title"><span class="step-number">3</span>Pago</h2>
+
+                <div class="aviso" id="avisoAdmin" hidden>
+                    Estás logueado como <strong>administrador</strong>. Las ventas de boletería se registran desde
+                    <a href="admin.html#ventas">Panel &gt; Ventas</a>, eligiendo el cliente.
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="formaPago">Forma de pago</label>
+                    <select class="form-control" id="formaPago"></select>
+                </div>
+
+                <div class="resumen" id="resumen"></div>
+
+                <button class="btn btn-primary btn-lg btn-block" id="btnConfirmar">Confirmar compra</button>
+                <p class="form-hint text-center" id="hintLogin" style="margin-top:.75rem"></p>
+            </section>
+        </div>
+
+        <!-- Resultado -->
+        <section class="card comprobante" id="comprobante" hidden></section>
+    </main>
+
+    <footer class="footer">
+        <div class="container"><span>© 2026 Cines Hollywood - TPI</span></div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.14.5/sweetalert2.all.min.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/butacas.js"></script>
+    <script src="js/reserva.js"></script>
+</body>
+</html>

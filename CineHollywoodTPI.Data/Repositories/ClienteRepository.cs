@@ -57,19 +57,29 @@ namespace CineHollywoodTPI.Data.Repositories
         public async Task<bool> UpdateAsync(Cliente cliente)
         {
             // EF Core se encarga de actualizar tanto la tabla CLIENTE como la tabla PERSONA vinculada
-            _context.Cliente.Update(cliente);
-            return await _context.SaveChangesAsync() > 0;
+            if (_context.Entry(cliente).State == EntityState.Detached)
+                _context.Cliente.Update(cliente);
+
+            await _context.SaveChangesAsync(); // 0 filas = no había cambios, no es un error
+            return true;
         }
 
         // 5. BORRADO LÓGICO: Desactivar al cliente del sistema
         public async Task<bool> DeleteLogicoAsync(int id)
         {
             var cliente = await _context.Cliente.FindAsync(id);
-            if (cliente == null) return false;
+            if (cliente == null || !cliente.Activo) return false;
 
             cliente.Activo = false; // Desactivación lógica
-            _context.Cliente.Update(cliente);
             return await _context.SaveChangesAsync() > 0;
+        }
+
+        // 6. Verifica si ya hay otra persona con ese DNI (para no duplicar clientes)
+        public async Task<bool> ExisteDocumentoAsync(string nroDocumento, int? excluirIdPersona = null)
+        {
+            return await _context.Personas.AnyAsync(p =>
+                p.NroDocumento == nroDocumento &&
+                (excluirIdPersona == null || p.IdPersona != excluirIdPersona));
         }
     }
 }

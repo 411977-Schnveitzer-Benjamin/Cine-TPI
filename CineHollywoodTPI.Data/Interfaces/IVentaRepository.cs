@@ -1,21 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using CineHollywoodTPI.Data.DTOs;
+﻿using CineHollywoodTPI.Data.DTOs;
 using CineHollywoodTPI.Data.Models;
 
 namespace CineHollywoodTPI.Data.Interfaces
 {
     public interface IVentaRepository
     {
-        Task<IEnumerable<Venta>> GetAllAsync(); // Para alimentar los gráficos del Dashboard
-        Task<Venta?> GetByIdAsync(int id); // Para consultar una venta con sus entradas
+        Task<IEnumerable<VentaListadoDTO>> GetAllAsync(int? idCliente = null); // Listado (maestro)
+        Task<VentaDetalleDTO?> GetDetalleAsync(int id); // Maestro + detalle de entradas
         Task<ResumenVentasDTO> GetTotalesAsync(); // Totales del negocio para dashboard
-        Task<bool> RegistrarVentaAsync(
+
+        // Transacción Maestro-Detalle: VENTA + ENTRADAs + VENTAxFORMA_PAGO.
+        // Valida butacas y calcula precios del lado del servidor. Devuelve el id de la venta creada.
+        // Si algo no es válido lanza InvalidOperationException y no se guarda nada (rollback).
+        Task<int> RegistrarVentaAsync(
             Venta venta,
             IEnumerable<Entrada> entradas,
-            IEnumerable<VentaxFormaPago>? formasPago = null); // Transacción Maestro-Detalle + formas de pago
+            IEnumerable<VentaxFormaPago>? formasPago = null);
     }
 }
