@@ -8,6 +8,12 @@ Sistema web para un cine: cartelera pública, compra de entradas online eligiend
 - **Librerías del front (por CDN):** [Bootstrap 5.3](https://getbootstrap.com/) (diseño responsivo, componentes), [Chart.js](https://www.chartjs.org/) (gráficos), [SweetAlert2](https://sweetalert2.github.io/) (alertas), [Feather Icons](https://feathericons.com/) (íconos del panel)
 - **Testing de la API:** colección de **Postman** en `postman/` (60 requests con tests)
 
+> 📘 **¿Recién llegás al proyecto?** Leé la **[Guía para entender el proyecto a fondo](docs/GUIA.md)**. Está escrita para alguien que sabe algo de backend y nada de frontend, y usa siempre el código real del repo. Cubre:
+> - **Tecnologías y librerías**: qué es cada una, para qué se usa y en qué archivos.
+> - **JWT completo**: las 3 partes con un token de ejemplo, dónde se genera y se valida, cómo se guarda y viaja, cuándo vence, y un diagrama del flujo.
+> - **Frontend desde cero**: HTML (con `index.html` explicado línea por línea), CSS (selectores, modelo de caja, flexbox, qué es Bootstrap y qué es nuestro), JavaScript (DOM, eventos, `fetch` + `async/await`, Chart.js) y cómo se conectan entre sí.
+> - **Recorridos paso a paso**: login, de la cartelera al mapa de butacas, y la carga de un gráfico del dashboard.
+
 ---
 
 ## Índice
@@ -39,10 +45,6 @@ Sistema web para un cine: cartelera pública, compra de entradas online eligiend
 
 ### Crear la base de datos
 Ejecutar **`SistemaCineBdFinal_actual.sql`** (en la raíz del repo) en SQL Server Management Studio. Crea la base `SistemaCineBdFinal` con todas las tablas, claves, columnas autoincrementales y los datos de prueba (películas, sala, butacas, precios, roles, etc.).
-
-> ⚠️ El otro script, `SistemaCineBdFinal.sql`, es la **versión vieja**: no tiene columnas IDENTITY (autoincrementales), ni las columnas `activo` y `PosterUrl`, ni datos. Con ese script el sistema **no funciona**. Usar siempre `SistemaCineBdFinal_actual.sql`.
->
-> Si ya tenés una base creada con el script viejo, borrala y volvé a crearla con el nuevo.
 
 ### Pasos
 1. Abrir `CineHollywoodTPI.slnx` en Visual Studio.
@@ -201,7 +203,6 @@ CineHollywoodTPI.slnx                  ← la solución (3 proyectos)
 | Archivo | Qué es |
 |---|---|
 | `SistemaCineBdFinal_actual.sql` | ✅ Script de la base **actual** (estructura + datos). Es el que hay que usar |
-| `SistemaCineBdFinal.sql` | Script viejo, desactualizado (ver sección 1) |
 | `postman/CineHollywood.postman_collection.json` | Colección de Postman para probar la API (ver [sección 12](#12-probar-la-api-con-postman)) |
 
 ---
@@ -400,6 +401,13 @@ Para cambiar el descuento o el tope de entradas no hace falta tocar código.
 - **Contraseñas**: nunca se guardan en texto plano; se usa `PasswordHasher<Usuario>` de ASP.NET Identity.
 - **Registro** (`POST /api/auth/registro`): crea PERSONA + CLIENTE + USUARIO (rol Cliente) en una transacción. Si ya existe una persona con ese DNI (por ejemplo, cargada antes en boletería), la reutiliza.
 - **Vencimiento**: 120 minutos (`Jwt:ExpiraMinutos`). Si vence, la API responde 401 y el front cierra la sesión.
+- **Verificación al cargar cada página**: si hay una sesión guardada, `api.js` (`verificarSesion`) llama a `GET /api/auth/yo`. Si la API responde **401** (token vencido, firma inválida, clave del servidor cambiada…), el front borra la sesión y avisa con el evento `sesion-expirada`: en las páginas públicas la navbar vuelve a "Iniciar sesión" (`main.js`) y el panel redirige al login (`admin.js`). Si la API no responde por otro motivo (por ejemplo, está apagada), la sesión **no** se borra.
+- **Cerrar sesión (logout)**: el botón "Salir" **solo borra el token del navegador** (`Auth.cerrar()` → `localStorage`). La API no se entera y **no hay forma de invalidar un token en el servidor**: si alguien hubiera copiado el token, seguiría siendo válido hasta su vencimiento. Es así porque el JWT es *stateless*: la API valida firma, emisor, audiencia y vencimiento, pero no guarda qué tokens entregó, así que no tiene una lista contra la cual decir "este ya no vale". Para invalidarlo en el servidor haría falta agregar estado, por ejemplo:
+  - una **lista negra** de tokens revocados por su `jti` (el token ya lo trae) en una tabla o caché, con un endpoint `POST /api/auth/logout` que la cargue y un chequeo en `JwtBearerEvents.OnTokenValidated` que rechace los revocados;
+  - o una **versión de token por usuario** (columna en `USUARIO`, copiada como claim en el token) que se incrementa en el logout y se compara en cada request;
+  - o **tokens de acceso cortos + refresh tokens** guardados en la base, que se borran en el logout.
+
+  Las dos primeras agregan una consulta en cada request. La tercera no, pero el token de acceso sigue valiendo hasta que vence (por eso se hace de pocos minutos). Ninguna está implementada (detalle en `docs/GUIA.md`, sección 3.8).
 - **Roles**:
   - `Administrador`: todo el panel.
   - `Cliente`: comprar entradas por la web y ver **solo sus** compras.
@@ -428,7 +436,7 @@ Para cambiar el descuento o el tope de entradas no hace falta tocar código.
 |---|---|---|---|
 | POST | `/api/auth/login` | 🔓 | Devuelve el JWT |
 | POST | `/api/auth/registro` | 🔓 | Crea una cuenta de cliente y devuelve el JWT |
-| GET | `/api/auth/yo` | 👤 | Datos del usuario del token |
+| GET | `/api/auth/yo` | 👤 | Datos del usuario del token. El front lo llama al cargar cada página para verificar que la sesión siga valiendo |
 
 ### Películas
 | Método | Ruta | | Descripción |
