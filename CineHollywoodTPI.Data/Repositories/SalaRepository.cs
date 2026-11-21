@@ -85,7 +85,6 @@ namespace CineHollywoodTPI.Data.Repositories
 
         public async Task<int> CrearAsync(Sala sala)
         {
-            // Sala + todas sus butacas se insertan en un solo SaveChanges (atómico)
             _context.Salas.Add(sala);
             await _context.SaveChangesAsync();
             return sala.IdSala;

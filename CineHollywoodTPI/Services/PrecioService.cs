@@ -6,11 +6,6 @@ using Microsoft.Extensions.Options;
 
 namespace CineHollywoodTPI.API.Services
 {
-    // Reglas de precios:
-    //  - Precio base = precio vigente del TIPO DE SALA para la fecha de la función (PRECIO_TIPO_SALA).
-    //  - Si la función tiene PROMOCIÓN: se aplica solo la promo (a todos los tipos de espectador).
-    //  - Si NO tiene promoción: Jubilado y Menor tienen 15% de descuento (configurable).
-    //  - Al cargar un precio nuevo, el vigente se cierra el día anterior.
     public class PrecioService : IPrecioService
     {
         private readonly IPrecioRepository _precioRepository;
@@ -26,15 +21,12 @@ namespace CineHollywoodTPI.API.Services
 
         private static DateOnly Hoy => DateOnly.FromDateTime(DateTime.Today);
 
-        // ===================== CÁLCULO =====================
-
         public decimal PrecioBase(Funcion funcion)
         {
             var precios = funcion.IdSalaNavigation?.IdTipoSalaNavigation?.PrecioTipoSalas
                           ?? new List<PrecioTipoSala>();
             var fecha = funcion.Fecha ?? Hoy;
 
-            // Precio vigente para la fecha de la función; si no hay, el más reciente cargado
             var vigente = precios
                 .Where(p => (p.FechaDesde == null || p.FechaDesde <= fecha) &&
                             (p.FechaHasta == null || p.FechaHasta >= fecha))
@@ -54,19 +46,19 @@ namespace CineHollywoodTPI.API.Services
         public PrecioPorTipoDTO DetallePrecio(Funcion funcion, ItemDTO tipoEspectador)
         {
             var porcentaje = PorcentajeDescuento(funcion, tipoEspectador.Id, out var motivo);
+            var precioBase = PrecioBase(funcion);
             return new PrecioPorTipoDTO
             {
                 IdTipoEspectador = tipoEspectador.Id,
                 TipoEspectador = tipoEspectador.Descripcion,
-                Precio = Math.Round(PrecioBase(funcion) * (1 - porcentaje / 100m), 2),
-                // "-15%" para jubilado/menor, "2x1 Lunes y Martes -50%" para una promo
+                Precio = Math.Round(precioBase * (1 - porcentaje / 100m), 2),
+                PrecioSinDescuento = precioBase,
                 Descuento = porcentaje <= 0 ? null
                           : motivo != null ? $"{motivo} -{porcentaje:0.##}%"
                           : $"-{porcentaje:0.##}%"
             };
         }
 
-        // Decide qué descuento corresponde: la promoción tiene prioridad y NO se acumula
         private decimal PorcentajeDescuento(Funcion funcion, int idTipoEspectador, out string? motivo)
         {
             var promo = funcion.IdPromocionNavigation;
@@ -78,15 +70,13 @@ namespace CineHollywoodTPI.API.Services
 
             if (_reglas.IdsTipoEspectadorConDescuento.Contains(idTipoEspectador))
             {
-                motivo = null; // el nombre del tipo (Jubilado / Menor) ya se muestra al lado
+                motivo = null;
                 return _reglas.PorcentajeDescuentoJubiladoMenor;
             }
 
             motivo = null;
             return 0m;
         }
-
-        // ===================== ABM =====================
 
         public async Task<IEnumerable<PrecioDTO>> GetAllAsync()
         {
@@ -121,7 +111,6 @@ namespace CineHollywoodTPI.API.Services
             if (delTipo.Any(p => p.FechaDesde >= dto.FechaDesde))
                 throw new ConflictoException("Ya hay un precio cargado que empieza en esa fecha o después. Eliminalo primero o elegí otra fecha.");
 
-            // El precio que seguiría vigente se cierra el día anterior al nuevo
             foreach (var anterior in delTipo.Where(p => p.FechaHasta == null || p.FechaHasta >= dto.FechaDesde))
                 anterior.FechaHasta = dto.FechaDesde.AddDays(-1);
 
@@ -130,7 +119,7 @@ namespace CineHollywoodTPI.API.Services
                 IdTipoSala = dto.IdTipoSala,
                 Precio = Math.Round(dto.Precio, 2),
                 FechaDesde = dto.FechaDesde,
-                FechaHasta = null // vale hasta que se cargue otro
+                FechaHasta = null
             });
         }
 
@@ -142,7 +131,6 @@ namespace CineHollywoodTPI.API.Services
             if (precio.FechaDesde < Hoy)
                 throw new NegocioException("No se puede eliminar un precio que ya se aplicó. Cargá uno nuevo en su lugar.");
 
-            // El precio anterior (el que se cerró al cargar este) vuelve a cubrir el período
             var anterior = (await _precioRepository.GetPorTipoSalaAsync(precio.IdTipoSala ?? 0))
                 .Where(p => p.FechaDesde < precio.FechaDesde)
                 .OrderByDescending(p => p.FechaDesde)

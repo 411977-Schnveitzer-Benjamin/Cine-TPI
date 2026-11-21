@@ -1,17 +1,21 @@
-/* =========================================================================
-   index.js - Carrusel 3D con las películas en cartelera
-   (manipulación del DOM + eventos: se mueven los slides cambiando su transform)
-   ========================================================================= */
+document.addEventListener('DOMContentLoaded', cargarCarrusel);
 
-document.addEventListener('DOMContentLoaded', async () => {
+async function cargarCarrusel() {
     const track = document.getElementById('carouselTrack');
+    track.style.height = '';
     track.innerHTML = htmlCargando('Cargando cartelera...');
 
     let peliculas;
     try {
         peliculas = await api('/pelicula/cartelera');
     } catch (err) {
-        track.innerHTML = htmlVacio(err.message);
+        track.style.height = 'auto';
+        track.innerHTML = `
+            <div class="col-12 text-center text-body-secondary border border-dashed rounded-3 py-5 px-3">
+                <p class="mb-3">${esc(err.message)}</p>
+                <button type="button" class="btn btn-outline-primary rounded-pill" id="btnReintentarCartelera">Reintentar</button>
+            </div>`;
+        document.getElementById('btnReintentarCartelera').addEventListener('click', cargarCarrusel);
         return;
     }
 
@@ -29,11 +33,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         </button>`).join('');
 
     const slides = [...track.querySelectorAll('.carousel-slide')];
-    let actual = 0; // índice del slide del centro
+    let actual = 0;
 
     function actualizar() {
         slides.forEach((slide, i) => {
-            // Distancia circular al slide central
             let offset = i - actual;
             const n = slides.length;
             if (offset > n / 2) offset -= n;
@@ -64,4 +67,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('nextSlide').addEventListener('click', () => { actual = (actual + 1) % slides.length; actualizar(); });
 
     actualizar();
-});
+}

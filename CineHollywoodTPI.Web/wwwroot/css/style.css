@@ -1,30 +1,17 @@
-/* =========================================================================
-   CINES HOLLYWOOD - Estilos propios (se cargan DESPUÉS de Bootstrap 5.3)
-
-   1. Personalización de Bootstrap con variables CSS (colores del cine, fuentes)
-   2. Componentes que Bootstrap no trae: navbar transparente, hero, pósters,
-      carrusel 3D, mapa de butacas, botones de función
-   El tema claro/oscuro usa el atributo data-bs-theme de Bootstrap en <html>.
-   ========================================================================= */
-
-/* ---------- 1. Variables: tema CLARO ---------- */
 :root,
 [data-bs-theme="light"] {
-    /* Colores propios del cine */
     --cine-primary: #eab308;
     --cine-primary-hover: #facc15;
     --cine-primary-active: #ca8a04;
-    --cine-primary-ink: #1a1405;          /* texto sobre el amarillo */
-    --cine-surface: #ffffff;              /* fondo de tarjetas y modales */
+    --cine-primary-ink: #1a1405;
+    --cine-surface: #ffffff;
     --navbar-h: 70px;
     --font-title: 'Outfit', 'Inter', system-ui, sans-serif;
 
-    /* Butacas */
     --seat-free: #3b82f6;
     --seat-taken: #cbd5e1;
     --seat-selected: #eab308;
 
-    /* Sobrescribimos variables de Bootstrap */
     --bs-primary: #eab308;
     --bs-primary-rgb: 234, 179, 8;
     --bs-body-font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -37,7 +24,6 @@
     --bs-focus-ring-color: rgba(234, 179, 8, .35);
 }
 
-/* ---------- Variables: tema OSCURO ---------- */
 [data-bs-theme="dark"] {
     --cine-surface: #141821;
     --seat-taken: #475569;
@@ -54,14 +40,12 @@
     --bs-link-hover-color-rgb: 253, 224, 71;
 }
 
-/* ---------- Ajustes de componentes de Bootstrap ---------- */
 h1, h2, h3, h4, h5, .navbar-brand, .display-4, .display-5 { font-family: var(--font-title); }
 
 .card  { --bs-card-bg: var(--cine-surface); }
 .modal { --bs-modal-bg: var(--cine-surface); }
 .table { --bs-table-bg: transparent; }
 
-/* Botón primario amarillo con texto oscuro */
 .btn-primary {
     --bs-btn-color: var(--cine-primary-ink);
     --bs-btn-bg: var(--cine-primary);
@@ -91,7 +75,6 @@ h1, h2, h3, h4, h5, .navbar-brand, .display-4, .display-5 { font-family: var(--f
 }
 [data-bs-theme="dark"] .btn-outline-primary { --bs-btn-color: var(--cine-primary); }
 
-/* Botón secundario con borde: usa el color del texto (el gris de Bootstrap se lee poco en modo oscuro) */
 .btn-outline-secondary {
     --bs-btn-color: var(--bs-body-color);
     --bs-btn-border-color: var(--bs-border-color);
@@ -122,7 +105,6 @@ h1, h2, h3, h4, h5, .navbar-brand, .display-4, .display-5 { font-family: var(--f
 
 .border-dashed { border-style: dashed !important; }
 
-/* ---------- 2. Navbar ---------- */
 .navbar-cine {
     min-height: var(--navbar-h);
     background: var(--cine-surface);
@@ -138,7 +120,6 @@ h1, h2, h3, h4, h5, .navbar-brand, .display-4, .display-5 { font-family: var(--f
 }
 .navbar-brand b { color: var(--cine-primary); }
 
-/* En el inicio la barra es transparente sobre el hero hasta que se scrollea */
 .navbar-cine.navbar-transparente {
     background: linear-gradient(to bottom, rgba(0, 0, 0, .65), transparent);
     border-color: transparent;
@@ -150,17 +131,14 @@ h1, h2, h3, h4, h5, .navbar-brand, .display-4, .display-5 { font-family: var(--f
 .navbar-transparente .btn-outline-secondary { --bs-btn-color: #fff; --bs-btn-border-color: rgba(255, 255, 255, .45); }
 .navbar-transparente .navbar-toggler { border-color: rgba(255, 255, 255, .45); filter: invert(1); }
 .navbar-transparente .usuario-nav { color: #fff; }
-/* Menú abierto en celular: fondo sólido */
 .navbar-transparente:has(.navbar-collapse.show),
 .navbar-transparente:has(.navbar-collapse.collapsing) { background: #0b0d12; }
 
 .navbar-cine .nav-link.active { color: var(--cine-primary) !important; font-weight: 600; }
 .nav-link-admin { color: var(--cine-primary) !important; font-weight: 700; }
 
-/* Las páginas internas dejan lugar para la navbar fija */
 .page { padding-top: calc(var(--navbar-h) + 2.5rem); padding-bottom: 4rem; min-height: 80vh; }
 
-/* ---------- Hero (inicio) ---------- */
 .hero {
     position: relative;
     min-height: 82vh;
@@ -184,7 +162,6 @@ h1, h2, h3, h4, h5, .navbar-brand, .display-4, .display-5 { font-family: var(--f
 .hero .lead { color: rgba(255, 255, 255, .75); max-width: 560px; }
 .hero-badge { background: rgba(234, 179, 8, .15) !important; color: #facc15 !important; border: 1px solid rgba(234, 179, 8, .35); }
 
-/* ---------- Pósters (imagen real o generado con el título) ---------- */
 .poster {
     position: relative;
     aspect-ratio: 2 / 3;
@@ -192,7 +169,6 @@ h1, h2, h3, h4, h5, .navbar-brand, .display-4, .display-5 { font-family: var(--f
     overflow: hidden;
     background: var(--bs-tertiary-bg);
 }
-/* La imagen real va ENCIMA del póster generado (si falla la carga se elimina y se ve el generado) */
 .poster img { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; object-fit: cover; }
 .poster-generado {
     position: absolute; inset: 0;
@@ -215,11 +191,9 @@ h1, h2, h3, h4, h5, .navbar-brand, .display-4, .display-5 { font-family: var(--f
 }
 .poster-ribbon { position: absolute; top: .75rem; left: .75rem; z-index: 2; }
 
-/* Tarjeta de película: se eleva al pasar el mouse */
 .movie-card { transition: transform .25s, box-shadow .25s, border-color .25s; overflow: hidden; }
 .movie-card:hover { transform: translateY(-4px); box-shadow: 0 10px 30px rgba(0, 0, 0, .25); border-color: var(--cine-primary); }
 
-/* ---------- Carrusel 3D (inicio) ---------- */
 .carousel-3d { position: relative; height: 460px; overflow: hidden; }
 .carousel-slide {
     position: absolute;
@@ -247,8 +221,6 @@ h1, h2, h3, h4, h5, .navbar-brand, .display-4, .display-5 { font-family: var(--f
     .carousel-slide { width: 210px; margin-left: -105px; }
 }
 
-/* ---------- Reserva: botones de función ---------- */
-/* Al hacer scroll automático a un paso, que no quede tapado por la navbar fija */
 [id^="step"] { scroll-margin-top: calc(var(--navbar-h) + 1rem); }
 .funcion-btn { min-width: 150px; text-align: left; }
 .funcion-btn strong { font-family: var(--font-title); font-size: 1.3rem; display: block; }
@@ -258,7 +230,6 @@ h1, h2, h3, h4, h5, .navbar-brand, .display-4, .display-5 { font-family: var(--f
 .reserva-poster .poster-generado span { font-size: .8rem; }
 @media (max-width: 575.98px) { .reserva-poster { width: 80px; } }
 
-/* ---------- Mapa de butacas ---------- */
 .sala-mapa { overflow-x: auto; }
 .pantalla {
     width: min(80%, 520px);
@@ -291,7 +262,6 @@ h1, h2, h3, h4, h5, .navbar-brand, .display-4, .display-5 { font-family: var(--f
 .seat.seat--seleccionada { background: var(--seat-selected); color: var(--cine-primary-ink); transform: scale(1.08); }
 .leyenda i { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
 
-/* ---------- Comprobante ---------- */
 .comprobante-icono {
     width: 64px; height: 64px;
     border-radius: 50%;
@@ -300,7 +270,46 @@ h1, h2, h3, h4, h5, .navbar-brand, .display-4, .display-5 { font-family: var(--f
     color: var(--bs-success);
 }
 
-/* ---------- SweetAlert2: que combine con el sitio ---------- */
+@media (max-width: 575.98px) {
+    .tabla-apilable thead { display: none; }
+    .tabla-apilable,
+    .tabla-apilable > tbody,
+    .tabla-apilable > tbody > tr,
+    .tabla-apilable > tfoot { display: block; width: 100%; }
+    .tabla-apilable > tbody > tr {
+        border: 1px solid var(--bs-border-color);
+        border-radius: var(--bs-border-radius-lg);
+        padding: .4rem .9rem;
+        margin-bottom: .75rem;
+    }
+    .tabla-apilable > tbody > tr > td {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 1rem;
+        padding: .3rem 0;
+        border: 0;
+        box-shadow: none;
+        text-align: right !important;
+        overflow-wrap: anywhere;
+    }
+    .tabla-apilable > tbody > tr > td[data-label]::before {
+        content: attr(data-label);
+        flex-shrink: 0;
+        font-weight: 600;
+        color: var(--bs-secondary-color);
+        text-align: left;
+    }
+    .tabla-apilable > tbody > tr > td.td-accion {
+        border-top: 1px solid var(--bs-border-color);
+        margin-top: .3rem;
+        padding-top: .4rem;
+    }
+    .tabla-apilable td.td-accion .btn { width: 100%; }
+    .tabla-apilable > tfoot > tr { display: flex; justify-content: space-between; padding: .25rem .9rem; }
+    .tabla-apilable > tfoot > tr > th { border: 0; padding: 0; }
+}
+
 .swal2-popup { font-family: var(--bs-body-font-family) !important; border-radius: 1rem !important; border: 1px solid var(--bs-border-color); }
 .swal2-popup.swal2-toast { border-radius: .75rem !important; }
 .swal2-title { font-family: var(--font-title) !important; }
@@ -309,4 +318,32 @@ h1, h2, h3, h4, h5, .navbar-brand, .display-4, .display-5 { font-family: var(--f
 .swal2-styled.swal2-confirm { color: var(--cine-primary-ink) !important; }
 .swal2-styled.swal2-confirm.swal-peligro { color: #fff !important; }
 .swal2-styled.swal2-cancel { color: var(--bs-body-color) !important; border: 1px solid var(--bs-border-color) !important; }
-.swal2-container { z-index: 2000 !important; } /* por encima de los modales de Bootstrap */
+.swal2-container { z-index: 2000 !important; }
+
+.flatpickr-wrapper { display: block; }
+.flatpickr-calendar.static { z-index: 1060; }
+.flatpickr-day.selected, .flatpickr-day.selected:hover, .flatpickr-day.selected:focus {
+    background: var(--cine-primary); border-color: var(--cine-primary); color: var(--cine-primary-ink);
+}
+.flatpickr-day.today { border-color: var(--cine-primary); }
+
+[data-bs-theme="dark"] .flatpickr-calendar { background: var(--cine-surface); border: 1px solid var(--bs-border-color); box-shadow: 0 10px 30px rgba(0, 0, 0, .5); }
+[data-bs-theme="dark"] .flatpickr-calendar.arrowTop::before { border-bottom-color: var(--bs-border-color); }
+[data-bs-theme="dark"] .flatpickr-calendar.arrowTop::after { border-bottom-color: var(--cine-surface); }
+[data-bs-theme="dark"] .flatpickr-calendar.arrowBottom::before { border-top-color: var(--bs-border-color); }
+[data-bs-theme="dark"] .flatpickr-calendar.arrowBottom::after { border-top-color: var(--cine-surface); }
+[data-bs-theme="dark"] .flatpickr-months .flatpickr-month,
+[data-bs-theme="dark"] .flatpickr-months .flatpickr-prev-month,
+[data-bs-theme="dark"] .flatpickr-months .flatpickr-next-month,
+[data-bs-theme="dark"] .flatpickr-current-month .flatpickr-monthDropdown-months,
+[data-bs-theme="dark"] .flatpickr-current-month input.cur-year { color: var(--bs-body-color); fill: var(--bs-body-color); }
+[data-bs-theme="dark"] .flatpickr-months .flatpickr-prev-month svg,
+[data-bs-theme="dark"] .flatpickr-months .flatpickr-next-month svg { fill: var(--bs-body-color); }
+[data-bs-theme="dark"] .flatpickr-current-month .flatpickr-monthDropdown-months .flatpickr-monthDropdown-month { background: var(--cine-surface); }
+[data-bs-theme="dark"] .numInputWrapper span.arrowUp::after { border-bottom-color: var(--bs-body-color); }
+[data-bs-theme="dark"] .numInputWrapper span.arrowDown::after { border-top-color: var(--bs-body-color); }
+[data-bs-theme="dark"] span.flatpickr-weekday { color: var(--bs-secondary-color); }
+[data-bs-theme="dark"] .flatpickr-day { color: var(--bs-body-color); }
+[data-bs-theme="dark"] .flatpickr-day:hover, [data-bs-theme="dark"] .flatpickr-day:focus { background: var(--bs-tertiary-bg); border-color: var(--bs-tertiary-bg); }
+[data-bs-theme="dark"] .flatpickr-day.prevMonthDay, [data-bs-theme="dark"] .flatpickr-day.nextMonthDay,
+[data-bs-theme="dark"] .flatpickr-day.flatpickr-disabled, [data-bs-theme="dark"] .flatpickr-day.flatpickr-disabled:hover { color: rgba(255, 255, 255, .28); background: transparent; border-color: transparent; }

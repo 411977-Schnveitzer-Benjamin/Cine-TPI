@@ -5,10 +5,6 @@ using CineHollywoodTPI.Data.Models;
 
 namespace CineHollywoodTPI.API.Services
 {
-    // Reglas de clientes:
-    //  - Nombre y apellido obligatorios; DNI solo números (mínimo 6) y no repetido.
-    //  - La fecha de nacimiento no puede ser futura; la altura no puede ser negativa.
-    //  - Baja lógica (activo = 0).
     public class ClienteService : IClienteService
     {
         private readonly IClienteRepository _clienteRepository;

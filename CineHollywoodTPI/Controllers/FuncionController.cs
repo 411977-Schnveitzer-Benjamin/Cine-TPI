@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CineHollywoodTPI.API.Controllers
 {
-    // Solo HTTP. Las reglas (fecha pasada, superposición, funciones con ventas) están en FuncionService.
     [ApiController]
     [Route("api/[controller]")]
     public class FuncionController : ControllerBase
@@ -17,20 +16,16 @@ namespace CineHollywoodTPI.API.Controllers
             _funcionService = funcionService;
         }
 
-        // GET: api/funcion?idPelicula=3&soloProximas=true
         [HttpGet]
         public async Task<IActionResult> GetActivas([FromQuery] int? idPelicula = null, [FromQuery] bool soloProximas = false) =>
             Ok(await _funcionService.GetActivasAsync(idPelicula, soloProximas));
 
-        // GET: api/funcion/5
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetPorId(int id) => Ok(await _funcionService.GetPorIdAsync(id));
 
-        // GET: api/funcion/5/butacas
         [HttpGet("{id:int}/butacas")]
         public async Task<IActionResult> GetButacas(int id) => Ok(await _funcionService.GetButacasAsync(id));
 
-        // POST: api/funcion  -> 201 Created
         [Authorize(Roles = "Administrador")]
         [HttpPost]
         public async Task<IActionResult> Crear([FromBody] FuncionInsertDTO dto)
@@ -39,7 +34,6 @@ namespace CineHollywoodTPI.API.Controllers
             return CreatedAtAction(nameof(GetPorId), new { id }, new { mensaje = "Función creada con éxito!", id });
         }
 
-        // PUT: api/funcion/5
         [Authorize(Roles = "Administrador")]
         [HttpPut("{id:int}")]
         public async Task<IActionResult> Modificar(int id, [FromBody] FuncionUpdateDTO dto)
@@ -48,7 +42,6 @@ namespace CineHollywoodTPI.API.Controllers
             return Ok(new { mensaje = "Función modificada con éxito!" });
         }
 
-        // DELETE: api/funcion/5  (baja lógica = cancelar)
         [Authorize(Roles = "Administrador")]
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> Cancelar(int id)

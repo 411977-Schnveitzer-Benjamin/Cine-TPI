@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CineHollywoodTPI.API.Controllers
 {
-    // Login y registro. Las reglas (contraseña, email repetido, etc.) están en AuthService.
     [ApiController]
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
@@ -19,16 +18,13 @@ namespace CineHollywoodTPI.API.Controllers
             _authService = authService;
         }
 
-        // POST: api/auth/login  ->  devuelve el JWT
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDTO dto) => Ok(await _authService.LoginAsync(dto));
 
-        // POST: api/auth/registro  ->  crea Persona + Cliente + Usuario y devuelve el JWT (201 Created)
         [HttpPost("registro")]
         public async Task<IActionResult> Registro([FromBody] RegistroDTO dto) =>
             StatusCode(StatusCodes.Status201Created, await _authService.RegistrarAsync(dto));
 
-        // GET: api/auth/yo  ->  datos del token (sirve para verificar que sigue siendo válido)
         [Authorize]
         [HttpGet("yo")]
         public IActionResult Yo() => Ok(new

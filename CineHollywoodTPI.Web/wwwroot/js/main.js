@@ -1,9 +1,3 @@
-/* =========================================================================
-   main.js - Comportamiento común del sitio público:
-   navbar (Bootstrap), tema, login / registro con JWT, "Mis compras"
-   Requiere: Bootstrap, SweetAlert2, api.js
-   ========================================================================= */
-
 const ICONOS = {
     logo: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="2.5"/><path d="M7 2v20M17 2v20M2 12h20M2 7h5M2 17h5M17 17h5M17 7h5"/></svg>',
     sol: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg>',
@@ -18,7 +12,7 @@ const PAGINAS = [
 ];
 
 const Sesion = {
-    alLoguearse: null, // callback opcional (ej. reserva.html continúa la compra)
+    alLoguearse: null,
 
     pedirLogin(callback) {
         this.alLoguearse = callback || null;
@@ -29,15 +23,12 @@ const Sesion = {
 document.addEventListener('DOMContentLoaded', () => {
     renderNavbar();
     inyectarModalesAuth();
+    activarCamposFecha();
     renderAuthArea();
 
-    // index.html?login=1 abre el login (lo usa admin.html cuando no hay sesión)
     if (new URLSearchParams(location.search).get('login') === '1') abrirModal('loginModal');
 });
 
-/* ---------------------------------------------------------------------
-   NAVBAR de Bootstrap (se dibuja dentro de <header id="navbarCine">)
-   --------------------------------------------------------------------- */
 function renderNavbar() {
     const header = document.getElementById('navbarCine');
     if (!header) return;
@@ -67,7 +58,6 @@ function renderNavbar() {
             </div>
         </nav>`;
 
-    // En el inicio la barra es transparente hasta que se scrollea
     if (transparente) {
         const nav = header.querySelector('nav');
         const actualizar = () => nav.classList.toggle('navbar-transparente', window.scrollY < 40);
@@ -76,9 +66,6 @@ function renderNavbar() {
     }
 }
 
-/* ---------------------------------------------------------------------
-   ZONA DE LOGIN EN LA NAVBAR
-   --------------------------------------------------------------------- */
 function renderAuthArea() {
     const zona = document.getElementById('authArea');
     if (!zona) return;
@@ -108,7 +95,6 @@ function renderAuthArea() {
 
     document.getElementById('themeToggle').addEventListener('click', () => { Tema.alternar(); renderAuthArea(); });
 
-    // Link al panel solo para administradores
     const links = document.getElementById('navLinks');
     links?.querySelector('.item-admin')?.remove();
     if (Auth.esAdmin() && links) {
@@ -116,9 +102,6 @@ function renderAuthArea() {
     }
 }
 
-/* ---------------------------------------------------------------------
-   MODALES DE LOGIN / REGISTRO / MIS COMPRAS (Bootstrap)
-   --------------------------------------------------------------------- */
 function inyectarModalesAuth() {
     document.body.insertAdjacentHTML('beforeend', `
     <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginTitulo" aria-hidden="true">
@@ -201,7 +184,7 @@ function inyectarModalesAuth() {
     </div>
 
     <div class="modal fade" id="misComprasModal" tabindex="-1" aria-labelledby="mcTitulo" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen-sm-down">
             <div class="modal-content">
                 <div class="modal-header">
                     <h2 class="modal-title fs-4" id="mcTitulo">Mis compras</h2>
@@ -256,7 +239,6 @@ async function onRegistro(e) {
         password: document.getElementById('regPassword').value
     };
 
-    // Validaciones en el cliente (la API las vuelve a validar)
     if (!datos.nombre || !datos.apellido || !datos.nroDocumento || !datos.email)
         return mostrarError('registerError', 'Completá todos los campos obligatorios.');
     if (!/^\d{6,}$/.test(datos.nroDocumento))
@@ -298,9 +280,6 @@ function despuesDeLoguear(resp, modalId, mensaje) {
     }
 }
 
-/* ---------------------------------------------------------------------
-   MIS COMPRAS (cliente logueado)
-   --------------------------------------------------------------------- */
 async function abrirMisCompras() {
     const body = document.getElementById('misComprasBody');
     body.innerHTML = htmlCargando();
@@ -312,16 +291,16 @@ async function abrirMisCompras() {
             return;
         }
         body.innerHTML = `
-            <div class="table-responsive"><table class="table table-hover align-middle">
+            <div class="table-responsive"><table class="table table-hover align-middle tabla-apilable">
                 <thead><tr><th>N°</th><th>Fecha</th><th class="text-end">Entradas</th><th>Pago</th><th class="text-end">Total</th><th></th></tr></thead>
                 <tbody>${ventas.map(v => `
                     <tr>
-                        <td>#${v.idVenta}</td>
-                        <td>${fmtFechaHora(v.fechaHora)}</td>
-                        <td class="text-end">${v.cantidadEntradas}</td>
-                        <td>${esc(v.formasPago)}</td>
-                        <td class="text-end">${fmtMoneda(v.total)}</td>
-                        <td><button class="btn btn-link btn-sm" data-venta="${v.idVenta}">Ver detalle</button></td>
+                        <td data-label="N°">#${v.idVenta}</td>
+                        <td data-label="Fecha">${fmtFechaHora(v.fechaHora)}</td>
+                        <td data-label="Entradas" class="text-end">${v.cantidadEntradas}</td>
+                        <td data-label="Pago">${esc(v.formasPago)}</td>
+                        <td data-label="Total" class="text-end fw-semibold">${fmtMoneda(v.total)}</td>
+                        <td class="td-accion"><button class="btn btn-link btn-sm" data-venta="${v.idVenta}">Ver detalle</button></td>
                     </tr>`).join('')}
                 </tbody>
             </table></div>
@@ -335,8 +314,15 @@ async function abrirMisCompras() {
             } catch (err) {
                 cont.innerHTML = htmlVacio(err.message);
             }
+            cont.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }));
     } catch (err) {
         body.innerHTML = htmlVacio(err.message);
     }
 }
+
+document.addEventListener('sesion-expirada', () => {
+    toast('Tu sesión expiró. Volvé a iniciar sesión.', 'warning', 6000);
+    renderAuthArea();
+    document.dispatchEvent(new Event('sesion-cambiada'));
+});

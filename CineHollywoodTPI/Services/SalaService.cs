@@ -5,11 +5,6 @@ using CineHollywoodTPI.Data.Models;
 
 namespace CineHollywoodTPI.API.Services
 {
-    // Reglas de salas:
-    //  - Nombre obligatorio y único dentro del complejo; tipo de sala y complejo existentes.
-    //  - Butacas: 1 a 26 filas (A..Z) y 1 a 40 por fila; se generan automáticamente.
-    //  - Si la sala ya tiene entradas vendidas o reservas, no se puede cambiar la cantidad de butacas.
-    //  - Si la sala tiene funciones cargadas, no se puede eliminar.
     public class SalaService : ISalaService
     {
         private const int MaxFilas = 26;
@@ -43,7 +38,6 @@ namespace CineHollywoodTPI.API.Services
                 throw new ConflictoException("Ya existe una sala con ese nombre en el complejo.");
         }
 
-        // Genera las butacas A1..A{n}, B1..B{n}, etc.
         private static List<Butaca> GenerarButacas(int filas, int porFila) =>
             Enumerable.Range(0, filas).SelectMany(f =>
                 Enumerable.Range(1, porFila).Select(n => new Butaca

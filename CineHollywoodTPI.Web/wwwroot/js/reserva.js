@@ -1,16 +1,10 @@
-/* =========================================================================
-   reserva.js - Compra web de entradas
-   1) función  2) butacas + tipo de espectador  3) forma de pago -> POST /api/venta
-   Requiere: api.js, main.js, butacas.js
-   ========================================================================= */
-
 const estado = {
     pelicula: null,
     funciones: [],
     funcion: null,
     formasPago: [],
     seleccion: [],
-    entradasUI: { entradas: () => [], total: () => 0, detalle: () => [] } // lo arma renderDetalleEntradas
+    entradasUI: { entradas: () => [], total: () => 0, detalle: () => [] }
 };
 
 document.addEventListener('DOMContentLoaded', iniciarReserva);
@@ -56,12 +50,10 @@ async function iniciarReserva() {
 
     renderFunciones();
 
-    // Si vino ?funcion=X (desde los horarios de la cartelera) la preseleccionamos
     const idFuncion = Number(params.get('funcion'));
     if (idFuncion && estado.funciones.some(f => f.idFuncion === idFuncion)) elegirFuncion(idFuncion);
 }
 
-/* ---------- Paso 1 ---------- */
 function renderFunciones() {
     const cont = document.getElementById('funcionesLista');
     if (!estado.funciones.length) {
@@ -69,7 +61,6 @@ function renderFunciones() {
         return;
     }
 
-    // Agrupamos por día
     const porDia = {};
     estado.funciones.forEach(f => (porDia[f.fecha] ??= []).push(f));
 
@@ -81,8 +72,8 @@ function renderFunciones() {
                     <button type="button" class="btn btn-outline-secondary funcion-btn" data-funcion="${f.idFuncion}" aria-pressed="false">
                         <strong>${fmtHora(f.horaInicio)}</strong>
                         <small class="d-block text-body-secondary">${esc(f.salaNombre)} · ${esc(f.formatoDescripcion ?? '')}</small>
-                        <small class="d-block">General ${fmtMoneda(f.precioEntrada)}</small>
-                        ${f.promocionDescripcion ? `<span class="badge text-bg-primary mt-1">${esc(f.promocionDescripcion)}</span>` : ''}
+                        <small class="d-block">General ${htmlPrecio(f.precioEntrada, f.precioSinDescuento)}</small>
+                        ${f.promocionDescripcion ? `<span class="badge text-bg-primary mt-1">${esc(f.promocionDescripcion)} -${Number(f.porcentajeDescuento)}%</span>` : ''}
                     </button>`).join('')}
             </div>
         </div>`).join('');
@@ -125,17 +116,14 @@ async function cargarMapa() {
     }
 }
 
-/* ---------- Paso 2 ---------- */
 function onSeleccionCambiada() {
     const detalle = document.getElementById('entradasDetalle');
-    // Cada entrada elige su tipo (General / Jubilado / Menor); el precio de cada uno viene del servidor
     estado.entradasUI = renderDetalleEntradas(detalle, estado.seleccion, estado.funcion, renderResumen);
 
     document.getElementById('step3').hidden = estado.seleccion.length === 0;
     actualizarPaso3();
 }
 
-/* ---------- Paso 3 ---------- */
 function actualizarPaso3() {
     if (!estado.funcion) return;
     const esAdmin = Auth.esAdmin();
@@ -155,15 +143,14 @@ function renderResumen() {
     if (!estado.funcion) return;
     const forma = estado.formasPago.find(f => f.id === Number(document.getElementById('formaPago').value));
 
-    // Agrupamos las entradas por tipo: "2 x General $4.000", "1 x Jubilado $3.400"
     const grupos = {};
     estado.entradasUI.detalle().forEach(d => {
-        const g = (grupos[d.tipo] ??= { cant: 0, precio: d.precio });
+        const g = (grupos[d.tipo] ??= { cant: 0, precio: d.precio, precioSinDescuento: d.precioSinDescuento });
         g.cant++;
     });
-    // Cada línea es un item de una "list-group" de Bootstrap
     const fila = (izq, der) => `<li class="list-group-item d-flex justify-content-between gap-3"><span>${izq}</span><span class="text-end">${der}</span></li>`;
-    const lineas = Object.entries(grupos).map(([tipo, g]) => fila(`${g.cant} x ${esc(tipo)}`, `${fmtMoneda(g.precio)} c/u`)).join('');
+    const lineas = Object.entries(grupos).map(([tipo, g]) => fila(`${g.cant} x ${esc(tipo)}`, `${htmlPrecio(g.precio, g.precioSinDescuento)} c/u`)).join('');
+    const ahorro = estado.entradasUI.ahorro();
 
     document.getElementById('resumen').innerHTML = `
         ${fila('Película', `<strong>${esc(estado.pelicula.titulo)}</strong>`)}
@@ -171,6 +158,7 @@ function renderResumen() {
         ${fila('Butacas', estado.seleccion.map(b => esc(b.fila) + b.numero).join(', ') || '-')}
         ${lineas}
         ${estado.funcion.promocionDescripcion ? fila('Promoción', `${esc(estado.funcion.promocionDescripcion)} (-${Number(estado.funcion.porcentajeDescuento)}%)`) : ''}
+        ${ahorro > 0 ? fila('Ahorrás', `<strong class="text-success">${fmtMoneda(ahorro)}</strong>`) : ''}
         ${fila('Forma de pago', esc(forma?.descripcion ?? '-'))}
         <li class="list-group-item d-flex justify-content-between fs-4 fw-bold text-primary"><span>Total</span><span>${fmtMoneda(estado.entradasUI.total())}</span></li>`;
 }
@@ -189,7 +177,6 @@ async function confirmarCompra() {
     btn.textContent = 'Procesando...';
 
     try {
-        // Maestro (venta) + detalle (entradas) + forma de pago: la API lo guarda en UNA transacción
         const resp = await api('/venta', {
             method: 'POST',
             body: {
@@ -200,7 +187,6 @@ async function confirmarCompra() {
         await mostrarComprobante(resp.idVenta);
     } catch (err) {
         toast(err.message, 'error', 6000);
-        // Si alguien ganó la butaca, refrescamos el mapa
         if (/ocupada|acaba de vender/i.test(err.message)) {
             estado.seleccion = [];
             await cargarMapa();
@@ -219,7 +205,7 @@ async function mostrarComprobante(idVenta) {
     let detalle = '';
     try {
         detalle = htmlDetalleVenta(await api(`/venta/${idVenta}`));
-    } catch { /* si falla el detalle igual mostramos el ok */ }
+    } catch {  }
 
     comp.innerHTML = `
         <div class="card-body p-4">

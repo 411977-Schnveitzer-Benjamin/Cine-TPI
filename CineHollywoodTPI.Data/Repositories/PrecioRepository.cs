@@ -24,7 +24,6 @@ namespace CineHollywoodTPI.Data.Repositories
         public async Task<PrecioTipoSala?> GetByIdAsync(int idPrecio) =>
             await _context.PrecioTipoSalas.FindAsync(idPrecio);
 
-        // Devuelve las entidades trackeadas: el servicio puede modificarles fecha_hasta
         public async Task<List<PrecioTipoSala>> GetPorTipoSalaAsync(int idTipoSala) =>
             await _context.PrecioTipoSalas
                 .Where(p => p.IdTipoSala == idTipoSala)
@@ -37,7 +36,7 @@ namespace CineHollywoodTPI.Data.Repositories
             try
             {
                 _context.PrecioTipoSalas.Add(nuevo);
-                await _context.SaveChangesAsync(); // guarda también los anteriores modificados
+                await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
                 return nuevo.IdPrecio;
             }

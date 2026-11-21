@@ -7,7 +7,6 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace CineHollywoodTPI.API.Services
 {
-    // Nombres de los claims propios que viajan dentro del token
     public static class ClaimsCine
     {
         public const string IdUsuario = "idUsuario";

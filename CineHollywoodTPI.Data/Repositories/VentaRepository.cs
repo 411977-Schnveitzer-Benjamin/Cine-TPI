@@ -15,7 +15,6 @@ namespace CineHollywoodTPI.Data.Repositories
             _context = context;
         }
 
-        // 1. Listado de ventas (maestro) con totales calculados desde el detalle
         public async Task<IEnumerable<VentaListadoDTO>> GetAllAsync(int? idCliente = null)
         {
             var query = _context.Venta.AsQueryable();
@@ -51,7 +50,6 @@ namespace CineHollywoodTPI.Data.Repositories
             });
         }
 
-        // 2. Una venta con todo su detalle (para el comprobante)
         public async Task<VentaDetalleDTO?> GetDetalleAsync(int id)
         {
             var venta = await _context.Venta
@@ -98,7 +96,6 @@ namespace CineHollywoodTPI.Data.Repositories
             };
         }
 
-        // 3. Totales del negocio para el dashboard
         public async Task<ResumenVentasDTO> GetTotalesAsync()
         {
             var totalVentas = await _context.Venta.CountAsync();
@@ -116,19 +113,14 @@ namespace CineHollywoodTPI.Data.Repositories
             };
         }
 
-        // 4. TRANSACCIÓN CRÍTICA: Registrar la venta (maestro) y sus entradas (detalle) juntas.
-        //    Las validaciones de negocio y los precios ya los hizo VentaService.
-        //    Si cualquier paso falla se hace ROLLBACK y no queda nada a medias.
         public async Task<int?> RegistrarVentaAsync(Venta venta, IEnumerable<Entrada> entradas, IEnumerable<VentaxFormaPago> formasPago)
         {
             var listaEntradas = entradas.ToList();
             var listaPagos = formasPago.ToList();
 
-            // Serializable: bloquea el rango leído, así dos ventas simultáneas no venden la misma butaca
             await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
             try
             {
-                // Control de integridad dentro de la transacción: ¿alguna butaca se vendió recién?
                 var idsFuncion = listaEntradas.Select(e => e.IdFuncion).Distinct().ToList();
                 var idsButaca = listaEntradas.Select(e => e.IdButaca).Distinct().ToList();
                 var yaVendidas = await _context.Entrada
@@ -142,12 +134,10 @@ namespace CineHollywoodTPI.Data.Repositories
                     return null;
                 }
 
-                // --- Maestro ---
                 venta.FechaHora ??= DateTime.Now;
                 _context.Venta.Add(venta);
                 await _context.SaveChangesAsync();
 
-                // --- Detalle ---
                 foreach (var entrada in listaEntradas)
                 {
                     entrada.IdVenta = venta.IdVenta;

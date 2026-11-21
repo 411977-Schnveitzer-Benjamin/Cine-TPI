@@ -1,6 +1,5 @@
 namespace CineHollywoodTPI.Data.DTOs
 {
-    // Fila del listado de ventas (maestro)
     public class VentaListadoDTO
     {
         public int IdVenta { get; set; }
@@ -13,7 +12,6 @@ namespace CineHollywoodTPI.Data.DTOs
         public decimal Total { get; set; }
     }
 
-    // Venta completa: maestro + detalle de entradas
     public class VentaDetalleDTO : VentaListadoDTO
     {
         public List<EntradaDetalleDTO> Entradas { get; set; } = new();

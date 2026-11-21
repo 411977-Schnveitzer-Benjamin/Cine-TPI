@@ -4,8 +4,6 @@ using CineHollywoodTPI.Data.Interfaces;
 
 namespace CineHollywoodTPI.API.Services
 {
-    // Catálogos de solo lectura. No tienen reglas de negocio, pero pasan por la capa de servicio
-    // igual que el resto para respetar la arquitectura: Controller -> Service -> Repository.
     public class CatalogoService : ICatalogoService
     {
         private readonly ICatalogoRepository _catalogo;

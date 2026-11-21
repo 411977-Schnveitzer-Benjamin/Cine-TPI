@@ -52,7 +52,6 @@ namespace CineHollywoodTPI.Data.Repositories
             var desde = new DateTime(anio, 1, 1);
             var hasta = desde.AddYears(1);
 
-            // Traemos una fila por venta con sus totales (SQL) y agrupamos por mes en memoria
             var ventas = await _context.Venta
                 .Where(v => v.FechaHora >= desde && v.FechaHora < hasta)
                 .Select(v => new

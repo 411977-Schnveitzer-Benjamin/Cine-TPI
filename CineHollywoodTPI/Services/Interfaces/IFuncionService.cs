@@ -12,7 +12,6 @@ namespace CineHollywoodTPI.API.Services.Interfaces
         Task ModificarAsync(int id, FuncionUpdateDTO dto);
         Task CancelarAsync(int id);
 
-        // Reglas reutilizadas por VentaService
         bool YaEmpezo(Funcion funcion);
         bool EsParaMayores(Funcion funcion);
     }

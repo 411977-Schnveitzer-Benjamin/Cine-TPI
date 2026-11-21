@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CineHollywoodTPI.API.Controllers
 {
-    // Precios de las entradas por tipo de sala (solo Administrador). Las reglas están en PrecioService.
     [ApiController]
     [Route("api/[controller]")]
     [Authorize(Roles = "Administrador")]
@@ -18,11 +17,9 @@ namespace CineHollywoodTPI.API.Controllers
             _precioService = precioService;
         }
 
-        // GET: api/precio
         [HttpGet]
         public async Task<IActionResult> GetAll() => Ok(await _precioService.GetAllAsync());
 
-        // POST: api/precio   { idTipoSala, precio, fechaDesde }
         [HttpPost]
         public async Task<IActionResult> Crear([FromBody] PrecioInsertDTO dto)
         {
@@ -30,7 +27,6 @@ namespace CineHollywoodTPI.API.Controllers
             return StatusCode(StatusCodes.Status201Created, new { mensaje = "Precio cargado con éxito.", id });
         }
 
-        // DELETE: api/precio/5
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> Eliminar(int id)
         {

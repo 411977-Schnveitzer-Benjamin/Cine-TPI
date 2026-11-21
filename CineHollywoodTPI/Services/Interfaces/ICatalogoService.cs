@@ -2,7 +2,6 @@ using CineHollywoodTPI.Data.DTOs;
 
 namespace CineHollywoodTPI.API.Services.Interfaces
 {
-    // Listas de solo lectura para los combos del frontend
     public interface ICatalogoService
     {
         Task<IEnumerable<ItemDTO>> GetClasificacionesAsync();

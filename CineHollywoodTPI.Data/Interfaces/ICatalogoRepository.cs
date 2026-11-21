@@ -2,7 +2,6 @@ using CineHollywoodTPI.Data.DTOs;
 
 namespace CineHollywoodTPI.Data.Interfaces
 {
-    // Tablas chicas de referencia que se usan para llenar los combos del frontend
     public interface ICatalogoRepository
     {
         Task<IEnumerable<ItemDTO>> GetClasificacionesAsync();

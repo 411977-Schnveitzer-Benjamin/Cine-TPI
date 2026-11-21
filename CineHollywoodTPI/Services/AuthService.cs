@@ -7,11 +7,6 @@ using Microsoft.AspNetCore.Identity;
 
 namespace CineHollywoodTPI.API.Services
 {
-    // Reglas de autenticación:
-    //  - Login: email + contraseña verificada con hash (PBKDF2). Mismo mensaje si el email no existe
-    //    o la contraseña es incorrecta. El usuario tiene que estar Activo.
-    //  - Registro: datos obligatorios, DNI numérico, email válido y no repetido, contraseña de 6+ caracteres.
-    //    Si ya existe una persona con ese DNI (ej. cargada en boletería) se reutiliza, salvo que ya tenga cuenta.
     public class AuthService : IAuthService
     {
         public const string RolAdministrador = "Administrador";
@@ -70,7 +65,6 @@ namespace CineHollywoodTPI.API.Services
             var idRolCliente = await _usuarioRepository.GetIdRolAsync(RolCliente)
                 ?? throw new Exception($"No existe el rol '{RolCliente}' en la tabla ROL_USUARIO.");
 
-            // ¿La persona ya existe (por DNI)? Ej: un cliente cargado antes en boletería
             var persona = await _usuarioRepository.GetPersonaPorDniAsync(dni);
             if (persona?.Usuario != null)
                 throw new ConflictoException("Ya existe una cuenta registrada con ese DNI.");
@@ -100,7 +94,6 @@ namespace CineHollywoodTPI.API.Services
                 FechaRegistro = DateTime.Now
             });
 
-            // Queda logueado: devolvemos el token
             var usuario = await _usuarioRepository.GetByEmailAsync(email);
             return _tokenService.GenerarToken(usuario!);
         }
@@ -133,7 +126,7 @@ namespace CineHollywoodTPI.API.Services
             }
             catch (FormatException)
             {
-                return false; // hash con formato inválido (ej. datos de prueba "HASH_FAKE_123")
+                return false;
             }
         }
     }

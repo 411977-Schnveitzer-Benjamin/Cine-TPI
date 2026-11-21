@@ -14,8 +14,6 @@ namespace CineHollywoodTPI.Data.Repositories
             _context = context;
         }
 
-        // Query base con todo lo necesario para mostrar la función, calcular su precio
-        // y validar la clasificación de la película
         private IQueryable<Funcion> QueryCompleta() =>
             _context.Funcion
                 .Include(f => f.IdPeliculaNavigation!)
@@ -112,11 +110,10 @@ namespace CineHollywoodTPI.Data.Repositories
 
         public async Task<bool> UpdateAsync(Funcion funcion)
         {
-            // Si la entidad ya viene trackeada (la trajimos con GetByIdAsync) alcanza con guardar.
             if (_context.Entry(funcion).State == EntityState.Detached)
                 _context.Funcion.Update(funcion);
 
-            await _context.SaveChangesAsync(); // 0 filas = no había cambios, no es un error
+            await _context.SaveChangesAsync();
             return true;
         }
 

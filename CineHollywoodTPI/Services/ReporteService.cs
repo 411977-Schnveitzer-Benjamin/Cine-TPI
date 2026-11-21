@@ -4,9 +4,6 @@ using CineHollywoodTPI.Data.Interfaces;
 
 namespace CineHollywoodTPI.API.Services
 {
-    // Reglas de reportes:
-    //  - Top entre 1 y 50; "desde" no puede ser mayor que "hasta".
-    //  - Año entre 2000 y el año que viene (si no se indica, el actual).
     public class ReporteService : IReporteService
     {
         private readonly IReporteRepository _reporteRepository;

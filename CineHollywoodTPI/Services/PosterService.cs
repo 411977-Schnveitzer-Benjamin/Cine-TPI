@@ -3,12 +3,10 @@ using System.Text.RegularExpressions;
 
 namespace CineHollywoodTPI.API.Services
 {
-    // Guarda los pósters de las películas en wwwroot/posters de la API.
-    // En la base se guarda la ruta relativa: "/posters/archivo.jpg"
     public class PosterService
     {
         public const string CarpetaPublica = "/posters/";
-        private const long TamanioMaximo = 5 * 1024 * 1024; // 5 MB
+        private const long TamanioMaximo = 5 * 1024 * 1024;
 
         private readonly string _carpeta;
         private readonly IHttpClientFactory _httpFactory;
@@ -20,7 +18,6 @@ namespace CineHollywoodTPI.API.Services
             _httpFactory = httpFactory;
         }
 
-        // 1) Imagen subida desde la PC (multipart/form-data)
         public async Task<string> GuardarArchivoAsync(IFormFile archivo)
         {
             if (archivo == null || archivo.Length == 0)
@@ -33,8 +30,6 @@ namespace CineHollywoodTPI.API.Services
             return await GuardarBytesAsync(ms.ToArray());
         }
 
-        // 2) Link: se descarga en el servidor. Si el link es una página web,
-        //    se busca la imagen principal de la página (meta og:image).
         public async Task<string> DescargarDesdeUrlAsync(string url)
         {
             if (!Uri.TryCreate(url?.Trim(), UriKind.Absolute, out var uri) ||
@@ -56,7 +51,6 @@ namespace CineHollywoodTPI.API.Services
             return await GuardarBytesAsync(bytes);
         }
 
-        // Borra un póster anterior guardado por nosotros (no toca links externos)
         public void BorrarSiEsLocal(string? posterUrl)
         {
             if (string.IsNullOrEmpty(posterUrl) || !posterUrl.StartsWith(CarpetaPublica)) return;
@@ -85,7 +79,6 @@ namespace CineHollywoodTPI.API.Services
 
         private static Uri? BuscarImagenPrincipal(string html, Uri paginaBase)
         {
-            // <meta property="og:image" content="..."> (también twitter:image), en cualquier orden de atributos
             var patrones = new[]
             {
                 @"<meta[^>]+(?:property|name)\s*=\s*[""'](?:og:image(?::secure_url)?|twitter:image)[""'][^>]*content\s*=\s*[""']([^""']+)[""']",
@@ -103,7 +96,6 @@ namespace CineHollywoodTPI.API.Services
 
         private async Task<string> GuardarBytesAsync(byte[] bytes)
         {
-            // Verificamos que realmente sea una imagen mirando los primeros bytes (no la extensión)
             var extension = DetectarExtension(bytes)
                 ?? throw new NegocioException("El archivo no es una imagen válida (se aceptan JPG, PNG, WEBP o GIF).");
 

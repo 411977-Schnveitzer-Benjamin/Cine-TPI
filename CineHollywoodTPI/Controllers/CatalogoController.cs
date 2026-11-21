@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CineHollywoodTPI.API.Controllers
 {
-    // Listas de solo lectura para los combos del frontend. Son públicas.
     [ApiController]
     [Route("api/[controller]")]
     public class CatalogoController : ControllerBase

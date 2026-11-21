@@ -1,6 +1,5 @@
 namespace CineHollywoodTPI.Data.DTOs
 {
-    // Item genérico para llenar <select> (clasificaciones, formatos, formas de pago, etc.)
     public class ItemDTO
     {
         public int Id { get; set; }
@@ -22,7 +21,6 @@ namespace CineHollywoodTPI.Data.DTOs
         public decimal? PorcentajeDescuento { get; set; }
     }
 
-    // Estado de una butaca para una función puntual (libre / ocupada)
     public class ButacaEstadoDTO
     {
         public int IdButaca { get; set; }

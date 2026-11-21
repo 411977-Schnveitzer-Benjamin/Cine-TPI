@@ -2,9 +2,6 @@ using CineHollywoodTPI.API.Services;
 
 namespace CineHollywoodTPI.API.Middleware
 {
-    // Atrapa las excepciones que salen de los servicios y arma la respuesta HTTP.
-    // Gracias a esto los controllers no tienen try/catch: si una regla no se cumple,
-    // el servicio lanza (por ej.) NegocioException("mensaje") y acá se devuelve 400 con ese mensaje.
     public class ManejoErroresMiddleware
     {
         private readonly RequestDelegate _next;

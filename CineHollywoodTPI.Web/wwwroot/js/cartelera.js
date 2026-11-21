@@ -1,7 +1,3 @@
-/* =========================================================================
-   cartelera.js - Películas con funciones próximas y sus horarios
-   ========================================================================= */
-
 document.addEventListener('DOMContentLoaded', async () => {
     const cont = document.getElementById('peliculas-container');
     cont.innerHTML = htmlCargando('Cargando cartelera...');

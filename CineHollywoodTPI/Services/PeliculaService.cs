@@ -5,11 +5,6 @@ using CineHollywoodTPI.Data.Models;
 
 namespace CineHollywoodTPI.API.Services
 {
-    // Reglas de películas:
-    //  - Título obligatorio (máx. 200), duración entre 1 y 600 minutos, clasificación existente.
-    //  - Baja lógica (activo = 0).
-    //  - Cartelera = activas con funciones desde hoy; estrenos = activas sin funciones.
-    //  - El póster se guarda en el servidor (subido o descargado desde un link).
     public class PeliculaService : IPeliculaService
     {
         private readonly IPeliculaRepository _peliculaRepository;
@@ -55,8 +50,6 @@ namespace CineHollywoodTPI.API.Services
             return p;
         }
 
-        // ===================== Consultas =====================
-
         public async Task<IEnumerable<PeliculaDTO>> GetActivasAsync() =>
             (await _peliculaRepository.GetAllActiveAsync()).Select(ToDto).ToList();
 
@@ -74,8 +67,6 @@ namespace CineHollywoodTPI.API.Services
         }
 
         public async Task<PeliculaDTO> GetPorIdAsync(int id) => ToDto(await GetActivaOFallarAsync(id));
-
-        // ===================== ABM =====================
 
         public async Task<int> CrearAsync(PeliculaInsertDTO dto)
         {
@@ -120,8 +111,6 @@ namespace CineHollywoodTPI.API.Services
             if (!await _peliculaRepository.DeleteLogicoAsync(id))
                 throw new NoEncontradoException($"No existe la película con ID {id} o ya está dada de baja.");
         }
-
-        // ===================== Póster =====================
 
         public Task<string> SubirPosterAsync(int id, IFormFile archivo) =>
             ReemplazarPosterAsync(id, () => _posterService.GuardarArchivoAsync(archivo));

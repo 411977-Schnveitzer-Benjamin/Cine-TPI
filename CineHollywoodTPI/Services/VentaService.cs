@@ -6,16 +6,6 @@ using Microsoft.Extensions.Options;
 
 namespace CineHollywoodTPI.API.Services
 {
-    // Reglas de ventas:
-    //  - Cliente logueado: compra a su nombre por el canal Web.
-    //    Administrador: vende en boletería y tiene que elegir un cliente activo.
-    //  - Entre 1 y 10 entradas por compra.
-    //  - La función tiene que existir, estar activa y NO haber empezado (fecha + hora).
-    //  - La butaca tiene que ser de la sala de la función, estar habilitada y libre (sin repetir).
-    //  - Película +18: no se venden entradas de tipo "Menor" ni a clientes menores de edad.
-    //  - Precio calculado en el servidor: promoción de la función, o 15% para Jubilado / Menor.
-    //  - Formas de pago: una sola sin monto paga el total; si son varias, tienen que sumar el total.
-    //  - Un cliente solo puede ver sus propias compras.
     public class VentaService : IVentaService
     {
         private readonly IVentaRepository _ventaRepository;
@@ -44,8 +34,6 @@ namespace CineHollywoodTPI.API.Services
             _reglas = reglas.Value;
         }
 
-        // ===================== Consultas =====================
-
         public async Task<IEnumerable<VentaListadoDTO>> GetVentasAsync(UsuarioActual usuario)
         {
             if (usuario.EsAdmin) return await _ventaRepository.GetAllAsync();
@@ -66,8 +54,6 @@ namespace CineHollywoodTPI.API.Services
 
         public Task<ResumenVentasDTO> GetTotalesAsync() => _ventaRepository.GetTotalesAsync();
 
-        // ===================== Registrar venta =====================
-
         public async Task<int> RegistrarAsync(VentaCompletaDTO dto, UsuarioActual usuario)
         {
             if (dto?.Entradas == null || dto.Entradas.Count == 0)
@@ -75,11 +61,9 @@ namespace CineHollywoodTPI.API.Services
             if (dto.Entradas.Count > _reglas.MaxEntradasPorCompra)
                 throw new NegocioException($"No se pueden vender más de {_reglas.MaxEntradasPorCompra} entradas en una misma operación.");
 
-            // 1. ¿A nombre de quién y por qué canal?
             var (cliente, idCanal) = await ResolverClienteYCanalAsync(dto, usuario);
             var clienteEsMenor = EsMenorDeEdad(cliente.IdClienteNavigation?.FechaNacimiento);
 
-            // 2. Validar cada entrada y calcular su precio
             var tiposValidos = (await _catalogoRepository.GetTiposEspectadorAsync()).Select(t => t.Id).ToHashSet();
             var funciones = new Dictionary<int, Funcion>();
             var butacasPorFuncion = new Dictionary<int, Dictionary<int, ButacaEstadoDTO>>();
@@ -108,7 +92,6 @@ namespace CineHollywoodTPI.API.Services
                 if (e.IdTipoEspectador == null || !tiposValidos.Contains(e.IdTipoEspectador.Value))
                     throw new NegocioException($"La entrada de la butaca {nombreButaca} no tiene un tipo de espectador válido.");
 
-                // Regla +18
                 if (_funcionService.EsParaMayores(funcion))
                 {
                     var titulo = funcion.IdPeliculaNavigation?.Titulo;
@@ -123,16 +106,13 @@ namespace CineHollywoodTPI.API.Services
                     IdFuncion = funcion.IdFuncion,
                     IdButaca = butaca.IdButaca,
                     IdTipoEspectador = e.IdTipoEspectador,
-                    // El precio SIEMPRE lo calcula el servidor (promo o 15% jubilado/menor)
                     PrecioFinal = _precioService.PrecioEntrada(funcion, e.IdTipoEspectador.Value)
                 });
             }
 
-            // 3. Formas de pago
             var total = entradas.Sum(x => x.PrecioFinal ?? 0m);
             var pagos = ValidarFormasPago(dto.FormasPago, total, await _catalogoRepository.GetFormasPagoAsync());
 
-            // 4. Guardar maestro + detalle en una transacción
             var venta = new Venta
             {
                 IdCliente = cliente.IdCliente,
@@ -194,7 +174,6 @@ namespace CineHollywoodTPI.API.Services
             if (pagos.Any(p => !validas.Contains(p.IdFormaPago!.Value)))
                 throw new NegocioException("Hay una forma de pago que no existe.");
 
-            // Una sola forma de pago sin monto: paga el total
             if (pagos.Count == 1 && (pagos[0].Monto ?? 0) == 0)
                 pagos[0].Monto = total;
 
@@ -206,7 +185,7 @@ namespace CineHollywoodTPI.API.Services
 
         private bool EsMenorDeEdad(DateOnly? nacimiento)
         {
-            if (nacimiento == null) return false; // sin dato no se puede saber: no se bloquea
+            if (nacimiento == null) return false;
             var hoy = DateOnly.FromDateTime(DateTime.Today);
             var edad = hoy.Year - nacimiento.Value.Year;
             if (nacimiento.Value > hoy.AddYears(-edad)) edad--;

@@ -14,9 +14,6 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ============================================================================
-// 1. CORS (para que el proyecto Web pueda consumir la API desde otro puerto)
-// ============================================================================
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("PermitirTodo", policy =>
@@ -27,18 +24,9 @@ builder.Services.AddCors(options =>
     });
 });
 
-// ============================================================================
-// 2. BASE DE DATOS
-// ============================================================================
 builder.Services.AddDbContext<SistemaCineContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// ============================================================================
-// 3. INYECCIÓN DE DEPENDENCIAS
-//    Controller  ->  Service (reglas de negocio)  ->  Repository (acceso a datos)
-// ============================================================================
-
-// 3.a Repositorios (capa de datos)
 builder.Services.AddScoped<IPeliculaRepository, PeliculaRepository>();
 builder.Services.AddScoped<IFuncionRepository, FuncionRepository>();
 builder.Services.AddScoped<IVentaRepository, VentaRepository>();
@@ -48,36 +36,31 @@ builder.Services.AddScoped<IReporteRepository, ReporteRepository>();
 builder.Services.AddScoped<ICatalogoRepository, CatalogoRepository>();
 builder.Services.AddScoped<IPrecioRepository, PrecioRepository>();
 builder.Services.AddScoped<ISalaRepository, SalaRepository>();
+builder.Services.AddScoped<IPromocionRepository, PromocionRepository>();
 
-// 3.b Servicios (capa de negocio)
 builder.Services.AddScoped<IPeliculaService, PeliculaService>();
 builder.Services.AddScoped<IFuncionService, FuncionService>();
 builder.Services.AddScoped<IVentaService, VentaService>();
 builder.Services.AddScoped<IClienteService, ClienteService>();
 builder.Services.AddScoped<ISalaService, SalaService>();
+builder.Services.AddScoped<IPromocionService, PromocionService>();
 builder.Services.AddScoped<IPrecioService, PrecioService>();
 builder.Services.AddScoped<IReporteService, ReporteService>();
 builder.Services.AddScoped<ICatalogoService, CatalogoService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
-// Parámetros de las reglas de negocio (descuentos, edad, topes...) desde appsettings.json
 builder.Services.Configure<ReglasNegocioOptions>(builder.Configuration.GetSection(ReglasNegocioOptions.Seccion));
 
-// 3.c Servicios de infraestructura
 builder.Services.AddScoped<TokenService>();
-builder.Services.AddScoped<IPasswordHasher<Usuario>, PasswordHasher<Usuario>>(); // hash seguro de contraseñas (PBKDF2)
+builder.Services.AddScoped<IPasswordHasher<Usuario>, PasswordHasher<Usuario>>();
 builder.Services.AddSingleton<PosterService>();
 builder.Services.AddHttpClient("posters", http =>
 {
     http.Timeout = TimeSpan.FromSeconds(15);
-    // Algunos sitios rechazan pedidos sin un User-Agent de navegador
     http.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) CineHollywoodTPI/1.0");
     http.DefaultRequestHeaders.Accept.ParseAdd("image/*,text/html;q=0.8,*/*;q=0.5");
 });
 
-// ============================================================================
-// 4. AUTENTICACIÓN JWT
-// ============================================================================
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -97,9 +80,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 builder.Services.AddAuthorization();
 
-// ============================================================================
-// 5. CONTROLADORES Y SWAGGER (con botón "Authorize" para probar con el token)
-// ============================================================================
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -128,9 +108,6 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// ============================================================================
-// 6. USUARIO ADMINISTRADOR INICIAL (se crea solo si no existe ningún admin)
-// ============================================================================
 using (var scope = app.Services.CreateScope())
 {
     try
@@ -148,9 +125,6 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// ============================================================================
-// 7. PIPELINE (el orden importa)
-// ============================================================================
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -158,18 +132,13 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
-    // En desarrollo NO redirigimos a HTTPS: el frontend llama a http://localhost:5191
-    // y la redirección rompe las peticiones CORS (preflight).
     app.UseHttpsRedirection();
 }
 
-// Sirve las imágenes guardadas: http://localhost:5191/posters/archivo.jpg
 app.UseStaticFiles();
 
-// CORS antes que todo lo demás, así las respuestas de error también llevan los headers CORS
 app.UseCors("PermitirTodo");
 
-// Convierte las excepciones de los servicios en 400 / 401 / 403 / 404 / 409 / 500
 app.UseMiddleware<ManejoErroresMiddleware>();
 
 app.UseAuthentication();

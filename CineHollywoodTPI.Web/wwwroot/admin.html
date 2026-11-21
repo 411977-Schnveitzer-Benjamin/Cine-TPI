@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de administrador - Cines Hollywood</title>
     <script>
-        // Si no hay sesión de administrador ni siquiera mostramos el panel
         (function () {
             try {
                 const s = JSON.parse(localStorage.getItem('cine_sesion'));
@@ -18,13 +17,13 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;700;800&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/admin.css">
 </head>
 <body>
 <div class="d-flex">
 
-    <!-- ===================== SIDEBAR (offcanvas-lg de Bootstrap) ===================== -->
     <aside class="offcanvas-lg offcanvas-start sidebar" tabindex="-1" id="sidebar" aria-labelledby="sidebarTitulo">
         <div class="offcanvas-header border-bottom">
             <h2 class="offcanvas-title h5 m-0" id="sidebarTitulo">Menú</h2>
@@ -51,6 +50,7 @@
                     <li class="nav-item"><a href="#funciones" class="nav-link" data-target="funciones"><i data-feather="calendar"></i>Funciones</a></li>
                     <li class="nav-item"><a href="#salas" class="nav-link" data-target="salas"><i data-feather="layout"></i>Salas</a></li>
                     <li class="nav-item"><a href="#precios" class="nav-link" data-target="precios"><i data-feather="dollar-sign"></i>Precios</a></li>
+                    <li class="nav-item"><a href="#promociones" class="nav-link" data-target="promociones"><i data-feather="percent"></i>Promociones</a></li>
                     <li class="nav-item"><a href="#clientes" class="nav-link" data-target="clientes"><i data-feather="users"></i>Clientes</a></li>
                     <li class="nav-item"><a href="#ventas" class="nav-link" data-target="ventas"><i data-feather="shopping-cart"></i>Ventas</a></li>
                 </ul>
@@ -63,7 +63,6 @@
         </div>
     </aside>
 
-    <!-- ===================== CONTENIDO ===================== -->
     <main class="flex-grow-1" style="min-width: 0">
         <header class="top-header d-flex align-items-center gap-3 px-3 px-lg-4 py-3">
             <button class="btn btn-outline-secondary btn-sm d-lg-none" id="sidebarToggle" type="button"
@@ -76,7 +75,6 @@
 
         <div class="p-3 p-lg-4">
 
-            <!-- ============ DASHBOARD ============ -->
             <section id="section-dashboard" class="admin-section" hidden>
                 <div class="row g-3 mb-4">
                     <div class="col-sm-6 col-xl-3">
@@ -106,7 +104,6 @@
                 </div>
 
                 <div class="row g-4">
-                    <!-- Reporte 1: películas más vendidas -->
                     <div class="col-xl-6">
                         <div class="card h-100"><div class="card-body">
                             <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
@@ -133,7 +130,6 @@
                         </div></div>
                     </div>
 
-                    <!-- Reporte 2: ventas mes a mes -->
                     <div class="col-xl-6">
                         <div class="card h-100"><div class="card-body">
                             <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
@@ -155,7 +151,6 @@
                 </div>
             </section>
 
-            <!-- ============ PELÍCULAS ============ -->
             <section id="section-peliculas" class="admin-section" hidden>
                 <div class="card"><div class="card-body">
                     <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
@@ -171,7 +166,6 @@
                 </div></div>
             </section>
 
-            <!-- ============ FUNCIONES ============ -->
             <section id="section-funciones" class="admin-section" hidden>
                 <div class="card"><div class="card-body">
                     <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
@@ -191,7 +185,6 @@
                 </div></div>
             </section>
 
-            <!-- ============ SALAS ============ -->
             <section id="section-salas" class="admin-section" hidden>
                 <div class="card"><div class="card-body">
                     <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
@@ -207,7 +200,6 @@
                 </div></div>
             </section>
 
-            <!-- ============ PRECIOS ============ -->
             <section id="section-precios" class="admin-section" hidden>
                 <div class="row g-3 mb-4" id="preciosVigentes"></div>
                 <div class="card"><div class="card-body">
@@ -231,7 +223,24 @@
                 </div></div>
             </section>
 
-            <!-- ============ CLIENTES ============ -->
+            <section id="section-promociones" class="admin-section" hidden>
+                <div class="card"><div class="card-body">
+                    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                        <p class="form-text m-0">
+                            Cada promoción se asigna a las funciones desde <a href="#funciones">Funciones</a>. Tiene prioridad sobre el 15% de
+                            Jubilado y Menor y no se acumula. Las entradas ya vendidas no cambian de precio.
+                        </p>
+                        <button class="btn btn-primary btn-sm ms-auto" id="btnNuevaPromocion"><i data-feather="plus"></i> Nueva promoción</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead><tr><th>Promoción</th><th class="num">Descuento</th><th class="num">Funciones próximas</th><th class="num">Funciones en total</th><th></th></tr></thead>
+                            <tbody id="tbodyPromociones"></tbody>
+                        </table>
+                    </div>
+                </div></div>
+            </section>
+
             <section id="section-clientes" class="admin-section" hidden>
                 <div class="card"><div class="card-body">
                     <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
@@ -247,7 +256,6 @@
                 </div></div>
             </section>
 
-            <!-- ============ VENTAS ============ -->
             <section id="section-ventas" class="admin-section" hidden>
                 <div class="card"><div class="card-body">
                     <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
@@ -266,9 +274,6 @@
     </main>
 </div>
 
-<!-- ===================== MODALES (Bootstrap) ===================== -->
-
-<!-- Película -->
 <div class="modal fade" id="modalPelicula" tabindex="-1" aria-labelledby="tituloModalPelicula" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <form class="modal-content" id="formPelicula" novalidate>
@@ -315,7 +320,6 @@
     </div>
 </div>
 
-<!-- Función -->
 <div class="modal fade" id="modalFuncion" tabindex="-1" aria-labelledby="tituloModalFuncion" aria-hidden="true">
     <div class="modal-dialog">
         <form class="modal-content" id="formFuncion" novalidate>
@@ -362,7 +366,6 @@
     </div>
 </div>
 
-<!-- Sala -->
 <div class="modal fade" id="modalSala" tabindex="-1" aria-labelledby="tituloModalSala" aria-hidden="true">
     <div class="modal-dialog">
         <form class="modal-content" id="formSala" novalidate>
@@ -405,7 +408,36 @@
     </div>
 </div>
 
-<!-- Precio -->
+<div class="modal fade" id="modalPromocion" tabindex="-1" aria-labelledby="tituloModalPromocion" aria-hidden="true">
+    <div class="modal-dialog">
+        <form class="modal-content" id="formPromocion" novalidate>
+            <div class="modal-header">
+                <h2 class="modal-title fs-5" id="tituloModalPromocion">Nueva promoción</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger py-2" id="errorPromocion" hidden></div>
+                <input type="hidden" id="promocionId">
+                <div class="row g-3">
+                    <div class="col-sm-8">
+                        <label class="form-label" for="promocionDescripcion">Descripción *</label>
+                        <input type="text" class="form-control" id="promocionDescripcion" maxlength="100" placeholder="Ej: Miércoles de estreno" required>
+                    </div>
+                    <div class="col-sm-4">
+                        <label class="form-label" for="promocionPorcentaje">Descuento (%) *</label>
+                        <input type="number" class="form-control" id="promocionPorcentaje" min="0.01" max="100" step="0.01" placeholder="Ej: 30" required>
+                    </div>
+                </div>
+                <div class="form-text mt-2" id="promocionResumen"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div class="modal fade" id="modalPrecio" tabindex="-1" aria-labelledby="tituloModalPrecio" aria-hidden="true">
     <div class="modal-dialog">
         <form class="modal-content" id="formPrecio" novalidate>
@@ -440,7 +472,6 @@
     </div>
 </div>
 
-<!-- Cliente -->
 <div class="modal fade" id="modalCliente" tabindex="-1" aria-labelledby="tituloModalCliente" aria-hidden="true">
     <div class="modal-dialog">
         <form class="modal-content" id="formCliente" novalidate>
@@ -492,7 +523,6 @@
     </div>
 </div>
 
-<!-- Nueva venta (boletería): maestro + detalle -->
 <div class="modal fade" id="modalVenta" tabindex="-1" aria-labelledby="tituloModalVenta" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <form class="modal-content" id="formVenta" novalidate>
@@ -533,7 +563,6 @@
     </div>
 </div>
 
-<!-- Detalle de venta -->
 <div class="modal fade" id="modalVentaDetalle" tabindex="-1" aria-labelledby="tituloModalDetalle" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
@@ -550,6 +579,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.14.5/sweetalert2.all.min.js"></script>
 <script src="https://unpkg.com/feather-icons@4.29.2/dist/feather.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/l10n/es.min.js"></script>
 <script src="js/api.js"></script>
 <script src="js/butacas.js"></script>
 <script src="js/admin.js"></script>

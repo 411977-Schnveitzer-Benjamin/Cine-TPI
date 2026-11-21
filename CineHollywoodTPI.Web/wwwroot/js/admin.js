@@ -1,15 +1,10 @@
-/* =========================================================================
-   admin.js - Panel de administrador
-   Dashboard (reportes) + ABM Películas / Funciones / Clientes + Ventas
-   Requiere: api.js, butacas.js, feather-icons, Chart.js
-   ========================================================================= */
-
 const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-const TITULOS = { dashboard: 'Dashboard', peliculas: 'Películas', funciones: 'Funciones', salas: 'Salas', precios: 'Precios', clientes: 'Clientes', ventas: 'Ventas' };
+const TITULOS = { dashboard: 'Dashboard', peliculas: 'Películas', funciones: 'Funciones', salas: 'Salas', precios: 'Precios', promociones: 'Promociones', clientes: 'Clientes', ventas: 'Ventas' };
 
 const Admin = {
     catalogos: { clasificaciones: [], salas: [], formatos: [], promociones: [], tiposEspectador: [], formasPago: [], tiposSala: [] },
     precios: [],
+    promociones: [],
     peliculas: [],
     funciones: [],
     clientes: [],
@@ -22,9 +17,6 @@ const Admin = {
 const $ = id => document.getElementById(id);
 const refrescarIconos = () => window.feather?.replace({ 'aria-hidden': 'true' });
 
-/* =====================================================================
-   INICIO
-   ===================================================================== */
 document.addEventListener('DOMContentLoaded', async () => {
     if (!Auth.esAdmin()) {
         location.replace('index.html?login=1');
@@ -36,6 +28,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('perfilAvatar').textContent = (s.nombre || 'A').charAt(0).toUpperCase();
 
     iniciarLayout();
+    activarCamposFecha();
     iniciarFormularios();
     refrescarIconos();
 
@@ -60,7 +53,6 @@ function iniciarLayout() {
         location.href = 'index.html';
     };
 
-    // Tema
     const iconoTema = () => {
         $('themeToggleAdmin').innerHTML = `<i data-feather="${Tema.actual() === 'dark' ? 'sun' : 'moon'}"></i>`;
         refrescarIconos();
@@ -72,7 +64,6 @@ function iniciarLayout() {
         dibujarGraficoMensual();
     });
     iconoTema();
-    // El menú lateral en celulares lo abre/cierra Bootstrap (offcanvas): no hace falta JS propio
 }
 
 function mostrarSeccion(nombre) {
@@ -87,16 +78,15 @@ function mostrarSeccion(nombre) {
     $('tituloSeccion').textContent = TITULOS[nombre];
     document.title = `${TITULOS[nombre]} - Panel Cines Hollywood`;
 
-    // En celulares, al elegir una sección se cierra el menú
     bootstrap.Offcanvas.getInstance($('sidebar'))?.hide();
 
-    // Cada vez que se entra a una sección se recargan sus datos
     ({
         dashboard: cargarDashboard,
         peliculas: cargarPeliculas,
         funciones: cargarFunciones,
         salas: cargarSalas,
         precios: cargarPrecios,
+        promociones: cargarPromociones,
         clientes: cargarClientes,
         ventas: cargarVentas
     })[nombre]();
@@ -133,7 +123,6 @@ function filaVacia(colspan, texto) {
     return `<tr><td colspan="${colspan}" class="text-center text-body-secondary py-4">${esc(texto)}</td></tr>`;
 }
 
-// Botones de acción de cada fila (botones de Bootstrap con íconos de Feather)
 function botonesAccion(id, { editar = true, borrar = true, ver = false } = {}) {
     return `<div class="d-flex justify-content-end gap-1">
         ${ver ? `<button class="btn btn-outline-secondary btn-sm btn-icono" data-ver="${id}" title="Ver detalle" aria-label="Ver detalle"><i data-feather="eye"></i></button>` : ''}
@@ -147,7 +136,6 @@ function errorForm(id, msg) {
     $(id).hidden = !msg;
 }
 
-// Ejecuta una acción del formulario deshabilitando el botón mientras tanto
 async function enviando(form, accion) {
     const btn = form.querySelector('[type=submit]');
     btn.disabled = true;
@@ -155,7 +143,6 @@ async function enviando(form, accion) {
 }
 
 function iniciarFormularios() {
-    // Películas
     $('btnNuevaPelicula').onclick = () => abrirFormPelicula();
     $('buscarPelicula').oninput = renderPeliculas;
     $('peliculaPoster').oninput = () => { $('peliculaArchivo').value = ''; previewPoster(); };
@@ -168,7 +155,6 @@ function iniciarFormularios() {
         const bo = e.target.closest('[data-borrar]'); if (bo) borrarPelicula(Number(bo.dataset.borrar));
     };
 
-    // Funciones
     $('btnNuevaFuncion').onclick = () => abrirFormFuncion();
     $('filtroFuncionPelicula').onchange = renderFunciones;
     $('filtroFuncionPasadas').onchange = renderFunciones;
@@ -179,7 +165,6 @@ function iniciarFormularios() {
         const bo = e.target.closest('[data-borrar]'); if (bo) borrarFuncion(Number(bo.dataset.borrar));
     };
 
-    // Salas
     $('btnNuevaSala').onclick = () => abrirFormSala();
     $('formSala').onsubmit = guardarSala;
     $('salaFilas').oninput = resumenSala;
@@ -189,7 +174,6 @@ function iniciarFormularios() {
         const bo = e.target.closest('[data-borrar]'); if (bo) borrarSala(Number(bo.dataset.borrar));
     };
 
-    // Precios
     $('btnNuevoPrecio').onclick = () => abrirFormPrecio();
     $('filtroPreciosHistoricos').onchange = renderPrecios;
     $('precioTipoSala').onchange = mostrarPrecioActual;
@@ -201,7 +185,14 @@ function iniciarFormularios() {
         const b = e.target.closest('[data-nuevo-precio]'); if (b) abrirFormPrecio(Number(b.dataset.nuevoPrecio));
     };
 
-    // Clientes
+    $('btnNuevaPromocion').onclick = () => abrirFormPromocion();
+    $('formPromocion').onsubmit = guardarPromocion;
+    $('promocionPorcentaje').oninput = resumenPromocion;
+    $('tbodyPromociones').onclick = e => {
+        const ed = e.target.closest('[data-editar]'); if (ed) abrirFormPromocion(Number(ed.dataset.editar));
+        const bo = e.target.closest('[data-borrar]'); if (bo) borrarPromocion(Number(bo.dataset.borrar));
+    };
+
     $('btnNuevoCliente').onclick = () => abrirFormCliente();
     $('buscarCliente').oninput = renderClientes;
     $('formCliente').onsubmit = guardarCliente;
@@ -210,7 +201,6 @@ function iniciarFormularios() {
         const bo = e.target.closest('[data-borrar]'); if (bo) borrarCliente(Number(bo.dataset.borrar));
     };
 
-    // Ventas
     $('btnNuevaVenta').onclick = abrirNuevaVenta;
     $('buscarVenta').oninput = renderVentas;
     $('ventaFuncion').onchange = cargarButacasVenta;
@@ -219,16 +209,12 @@ function iniciarFormularios() {
         const ver = e.target.closest('[data-ver]'); if (ver) verVenta(Number(ver.dataset.ver));
     };
 
-    // Dashboard
     $('topDesde').onchange = cargarTop;
     $('topHasta').onchange = cargarTop;
     $('topCantidad').onchange = cargarTop;
     $('mensualAnio').onchange = cargarMensual;
 }
 
-/* =====================================================================
-   DASHBOARD
-   ===================================================================== */
 async function cargarDashboard() {
     try {
         const [totales, proximas, anios] = await Promise.all([
@@ -308,7 +294,6 @@ async function cargarMensual() {
 
 function coloresGrafico() {
     const cs = getComputedStyle(document.documentElement);
-    // Colores tomados de las variables CSS (cambian con el tema claro/oscuro)
     return {
         primario: cs.getPropertyValue('--cine-primary').trim(),
         texto: cs.getPropertyValue('--bs-secondary-color').trim(),
@@ -327,7 +312,7 @@ function opcionesBase(c) {
 }
 
 function dibujarGraficoTop() {
-    if (!window.Chart) return; // si no cargó la librería quedan las tablas
+    if (!window.Chart) return;
     Admin.charts.top?.destroy();
     const c = coloresGrafico();
     const datos = Admin.datosTop;
@@ -406,9 +391,6 @@ function dibujarGraficoMensual() {
     });
 }
 
-/* =====================================================================
-   ABM PELÍCULAS
-   ===================================================================== */
 async function cargarPeliculas() {
     $('tbodyPeliculas').innerHTML = filaVacia(5, 'Cargando...');
     try {
@@ -437,8 +419,11 @@ function renderPeliculas() {
     refrescarIconos();
 }
 
-// Estado del póster en el formulario
-const posterForm = { actual: null, quitar: false, objectUrl: null };
+const posterForm = {
+    actual: null,
+    quitar: false,
+    objectUrl: null
+};
 
 function abrirFormPelicula(id) {
     const p = Admin.peliculas.find(x => x.idPelicula === id);
@@ -455,7 +440,6 @@ function abrirFormPelicula(id) {
     abrirModal('modalPelicula');
 }
 
-// Vista previa: archivo elegido > link pegado > póster actual > generado
 function previewPoster() {
     if (posterForm.objectUrl) URL.revokeObjectURL(posterForm.objectUrl);
     posterForm.objectUrl = null;
@@ -486,7 +470,7 @@ async function guardarPelicula(e) {
         titulo: $('peliculaTitulo').value.trim(),
         duracionMinutos: Number($('peliculaDuracion').value) || null,
         idClasificacion: Number($('peliculaClasificacion').value) || null,
-        posterUrl: posterForm.quitar ? null : posterForm.actual // el póster nuevo se sube aparte
+        posterUrl: posterForm.quitar ? null : posterForm.actual
     };
 
     if (!datos.titulo) return errorForm('errorPelicula', 'El título es obligatorio.');
@@ -498,21 +482,19 @@ async function guardarPelicula(e) {
         return errorForm('errorPelicula', 'El link tiene que empezar con http:// o https://');
 
     await enviando(e.target, async () => {
-        // 1) Datos de la película
         try {
             const resp = id
                 ? await api(`/pelicula/${id}`, { method: 'PUT', body: { idPelicula: id, ...datos } })
                 : await api('/pelicula', { method: 'POST', body: datos });
             if (!id) {
                 id = resp.id;
-                $('peliculaId').value = id; // si falla el póster, el reintento edita en vez de duplicar
+                $('peliculaId').value = id;
                 $('tituloModalPelicula').textContent = 'Editar película';
             }
         } catch (err) {
             return errorForm('errorPelicula', err.message);
         }
 
-        // 2) Póster: se guarda en el servidor (archivo subido o descargado desde el link)
         try {
             if (archivo) {
                 const fd = new FormData();
@@ -544,9 +526,6 @@ async function borrarPelicula(id) {
     }
 }
 
-/* =====================================================================
-   ABM FUNCIONES
-   ===================================================================== */
 async function cargarFunciones() {
     $('tbodyFunciones').innerHTML = filaVacia(8, 'Cargando...');
     try {
@@ -601,13 +580,13 @@ function abrirFormFuncion(id) {
     $('funcionSala').value = f?.idSala ?? Admin.catalogos.salas[0]?.idSala ?? '';
     $('funcionFormato').value = f?.idFormato ?? Admin.catalogos.formatos[0]?.id ?? '';
     $('funcionPromocion').value = f?.idPromocion ?? '';
-    $('funcionFecha').value = f?.fecha ?? hoyISO();
-    $('funcionFecha').min = f ? '' : hoyISO();
+    setLimitesFecha('funcionFecha', { min: f ? null : hoyISO() });
+    setFecha('funcionFecha', f?.fecha ?? hoyISO());
     $('funcionHora').value = f ? fmtHora(f.horaInicio) : '20:00';
 
-    // Regla de negocio (la valida FuncionService): con entradas vendidas no se puede mover la función
     const bloqueada = !!f?.tieneEntradasVendidas;
-    ['funcionPelicula', 'funcionSala', 'funcionFecha', 'funcionHora'].forEach(c => $(c).disabled = bloqueada);
+    ['funcionPelicula', 'funcionSala', 'funcionHora'].forEach(c => $(c).disabled = bloqueada);
+    habilitarFecha('funcionFecha', !bloqueada);
     errorForm('errorFuncion', null);
     if (bloqueada) {
         $('errorFuncion').textContent = 'Esta función ya tiene entradas vendidas: solo se puede cambiar el formato y la promoción.';
@@ -618,7 +597,6 @@ function abrirFormFuncion(id) {
     abrirModal('modalFuncion');
 }
 
-// Muestra en palabras la fecha que leyó el campo (evita confusiones dd/mm vs mm/dd o años de 2 dígitos)
 function mostrarFechaLeida() {
     const v = $('funcionFecha').value;
     $('funcionFechaTexto').textContent = v ? `Se va a guardar: ${fmtFechaLarga(v)} de ${v.substring(0, 4)}` : '';
@@ -641,7 +619,7 @@ async function guardarFuncion(e) {
     if (Number(datos.fecha.substring(0, 4)) < 2000)
         return errorForm('errorFuncion', `El año ${Number(datos.fecha.substring(0, 4))} no es válido. Escribí el año con 4 dígitos (ej. 2026).`);
     if (!id && datos.fecha < hoyISO())
-        return errorForm('errorFuncion', `La fecha ingresada es ${fmtFechaLarga(datos.fecha)} de ${datos.fecha.substring(0, 4)}, que ya pasó (hoy es ${fmtFecha(hoyISO())}). Revisá si el campo está en formato mes/día/año.`);
+        return errorForm('errorFuncion', `La fecha ingresada es ${fmtFechaLarga(datos.fecha)} de ${datos.fecha.substring(0, 4)}, que ya pasó (hoy es ${fmtFecha(hoyISO())}). Revisá la fecha (formato dd-mm-aaaa).`);
 
     await enviando(e.target, async () => {
         try {
@@ -669,9 +647,6 @@ async function borrarFuncion(id) {
     }
 }
 
-/* =====================================================================
-   ABM SALAS (las butacas se generan automáticamente)
-   ===================================================================== */
 async function cargarSalas() {
     $('tbodySalas').innerHTML = filaVacia(6, 'Cargando...');
     try {
@@ -712,7 +687,6 @@ function abrirFormSala(id) {
     $('salaFilas').value = s ? s.cantidadFilas : 8;
     $('salaPorFila').value = s ? s.butacasPorFila : 12;
 
-    // Si ya vendió entradas no se puede cambiar la distribución
     const bloquear = !!s?.tieneEntradasVendidas;
     $('salaFilas').disabled = bloquear;
     $('salaPorFila').disabled = bloquear;
@@ -760,7 +734,7 @@ async function guardarSala(e) {
             toast(resp.mensaje, 'success');
             cerrarModal('modalSala');
             cargarSalas();
-            cargarCatalogos(); // actualiza el combo de salas de las funciones
+            cargarCatalogos();
         } catch (err) {
             errorForm('errorSala', err.message);
         }
@@ -780,9 +754,94 @@ async function borrarSala(id) {
     }
 }
 
-/* =====================================================================
-   PRECIOS DE ENTRADAS (por tipo de sala)
-   ===================================================================== */
+async function cargarPromociones() {
+    $('tbodyPromociones').innerHTML = filaVacia(5, 'Cargando...');
+    try {
+        Admin.promociones = await api('/promocion');
+        renderPromociones();
+    } catch (err) {
+        $('tbodyPromociones').innerHTML = filaVacia(5, err.message);
+        manejarError(err);
+    }
+}
+
+function renderPromociones() {
+    $('tbodyPromociones').innerHTML = Admin.promociones.length
+        ? Admin.promociones.map(p => `
+            <tr>
+                <td class="fw-semibold">${esc(p.descripcion)}</td>
+                <td class="num"><span class="badge text-bg-warning">-${Number(p.porcentajeDescuento ?? 0)}%</span></td>
+                <td class="num">${p.funcionesProximas}</td>
+                <td class="num">${p.cantidadFunciones}</td>
+                <td>${botonesAccion(p.idPromocion)}</td>
+            </tr>`).join('')
+        : filaVacia(5, 'No hay promociones cargadas.');
+    refrescarIconos();
+}
+
+function abrirFormPromocion(id) {
+    const p = Admin.promociones.find(x => x.idPromocion === id);
+    $('formPromocion').reset();
+    errorForm('errorPromocion', null);
+    $('tituloModalPromocion').textContent = p ? 'Editar promoción' : 'Nueva promoción';
+    $('promocionId').value = p?.idPromocion ?? '';
+    $('promocionDescripcion').value = p?.descripcion ?? '';
+    $('promocionPorcentaje').value = p ? Number(p.porcentajeDescuento) : '';
+    resumenPromocion();
+    abrirModal('modalPromocion');
+}
+
+function resumenPromocion() {
+    const pct = Number($('promocionPorcentaje').value);
+    const p = Admin.promociones.find(x => x.idPromocion === Number($('promocionId').value));
+    const ejemplo = pct > 0 && pct <= 100 ? `Una entrada de ${fmtMoneda(10000)} queda en ${fmtMoneda(10000 * (1 - pct / 100))}.` : '';
+    const aviso = p?.funcionesProximas ? ` El cambio se aplica a las ${p.funcionesProximas} funciones próximas que la usan (las entradas ya vendidas no cambian).` : '';
+    $('promocionResumen').textContent = ejemplo + aviso;
+}
+
+async function guardarPromocion(e) {
+    e.preventDefault();
+    const id = Number($('promocionId').value) || null;
+    const datos = {
+        descripcion: $('promocionDescripcion').value.trim(),
+        porcentajeDescuento: Number($('promocionPorcentaje').value)
+    };
+
+    if (!datos.descripcion) return errorForm('errorPromocion', 'La descripción es obligatoria.');
+    if (!(datos.porcentajeDescuento > 0 && datos.porcentajeDescuento <= 100))
+        return errorForm('errorPromocion', 'El descuento tiene que ser mayor a 0% y como máximo 100%.');
+
+    await enviando(e.target, async () => {
+        try {
+            const resp = id
+                ? await api(`/promocion/${id}`, { method: 'PUT', body: datos })
+                : await api('/promocion', { method: 'POST', body: datos });
+            toast(resp.mensaje, 'success');
+            cerrarModal('modalPromocion');
+            cargarPromociones();
+            cargarCatalogos();
+        } catch (err) {
+            errorForm('errorPromocion', err.message);
+        }
+    });
+}
+
+async function borrarPromocion(id) {
+    const p = Admin.promociones.find(x => x.idPromocion === id);
+    const detalle = p?.cantidadFunciones
+        ? `La usan ${p.cantidadFunciones} ${p.cantidadFunciones === 1 ? 'función' : 'funciones'} (${p.funcionesProximas} próximas): van a quedar sin promoción. Las entradas ya vendidas mantienen su precio.`
+        : 'Ninguna función la usa.';
+    if (!await confirmar(`¿Eliminar "${p?.descripcion}"?`, detalle, { textoConfirmar: 'Sí, eliminar', peligroso: true })) return;
+    try {
+        const resp = await api(`/promocion/${id}`, { method: 'DELETE' });
+        toast(resp.mensaje, 'success');
+        cargarPromociones();
+        cargarCatalogos();
+    } catch (err) {
+        alerta('No se pudo eliminar la promoción', err.message, 'error');
+    }
+}
+
 async function cargarPrecios() {
     $('tbodyPrecios').innerHTML = filaVacia(6, 'Cargando...');
     try {
@@ -799,7 +858,6 @@ const precioProgramado = idTipo => Admin.precios.filter(p => p.idTipoSala === id
     .sort((a, b) => a.fechaDesde.localeCompare(b.fechaDesde))[0];
 
 function renderPrecios() {
-    // Tarjetas: precio actual de cada tipo de sala
     $('preciosVigentes').innerHTML = Admin.catalogos.tiposSala.map(t => {
         const v = precioVigente(t.id);
         const prox = precioProgramado(t.id);
@@ -839,8 +897,8 @@ function abrirFormPrecio(idTipoSala) {
     $('formPrecio').reset();
     errorForm('errorPrecio', null);
     if (idTipoSala) $('precioTipoSala').value = idTipoSala;
-    $('precioDesde').value = hoyISO();
-    $('precioDesde').min = hoyISO();
+    setLimitesFecha('precioDesde', { min: hoyISO() });
+    setFecha('precioDesde', hoyISO());
     mostrarPrecioActual();
     abrirModal('modalPrecio');
 }
@@ -897,9 +955,6 @@ async function borrarPrecio(id) {
     }
 }
 
-/* =====================================================================
-   ABM CLIENTES
-   ===================================================================== */
 async function cargarClientes() {
     $('tbodyClientes').innerHTML = filaVacia(6, 'Cargando...');
     try {
@@ -939,8 +994,8 @@ function abrirFormCliente(id) {
     $('clienteNombre').value = c?.nombre ?? '';
     $('clienteApellido').value = c?.apellido ?? '';
     $('clienteDni').value = c?.nroDocumento ?? '';
-    $('clienteNacimiento').value = c?.fechaNacimiento ?? '';
-    $('clienteNacimiento').max = hoyISO();
+    setLimitesFecha('clienteNacimiento', { max: hoyISO() });
+    setFecha('clienteNacimiento', c?.fechaNacimiento ?? '');
     $('clienteCalle').value = c?.calle ?? '';
     $('clienteAltura').value = c?.altura ?? '';
     $('clienteJubilado').checked = !!c?.esJubilado;
@@ -990,9 +1045,6 @@ async function borrarCliente(id) {
     }
 }
 
-/* =====================================================================
-   VENTAS (listado, detalle y venta en boletería)
-   ===================================================================== */
 async function cargarVentas() {
     $('tbodyVentas').innerHTML = filaVacia(8, 'Cargando...');
     try {
@@ -1035,7 +1087,6 @@ async function verVenta(id) {
     }
 }
 
-// --- Nueva venta en boletería: maestro (cliente, pago) + detalle (entradas) ---
 const entradasVacias = () => ({ entradas: () => [], total: () => 0, detalle: () => [] });
 const ventaNueva = { funcion: null, seleccion: [], entradasUI: entradasVacias() };
 
@@ -1082,7 +1133,6 @@ async function cargarButacasVenta() {
             max: 10,
             onChange: sel => {
                 ventaNueva.seleccion = sel;
-                // Precio por tipo de espectador calculado por el servidor (promo o 15% jubilado/menor)
                 ventaNueva.entradasUI = renderDetalleEntradas($('ventaEntradas'), sel, ventaNueva.funcion, actualizarTotalVenta);
                 actualizarTotalVenta();
             }
@@ -1108,12 +1158,11 @@ async function registrarVenta(e) {
 
     await enviando(e.target, async () => {
         try {
-            // Una sola llamada: la API guarda VENTA + ENTRADAs + forma de pago en una transacción
             const resp = await api('/venta', {
                 method: 'POST',
                 body: {
                     idCliente,
-                    idCanal: 1, // Boletería presencial
+                    idCanal: 1,
                     entradas,
                     formasPago: [{ idFormaPago: Number($('ventaFormaPago').value) }]
                 }
@@ -1128,3 +1177,8 @@ async function registrarVenta(e) {
         }
     });
 }
+
+document.addEventListener('sesion-expirada', () => {
+    toast('Tu sesión expiró. Volvé a iniciar sesión.', 'warning', 6000);
+    setTimeout(() => location.replace('index.html?login=1'), 1500);
+});

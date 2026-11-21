@@ -6,10 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CineHollywoodTPI.API.Controllers
 {
-    // Solo HTTP. Toda la lógica de la venta (validaciones, descuentos, transacción) está en VentaService.
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize] // todas las operaciones de venta requieren estar logueado
+    [Authorize]
     public class VentaController : ControllerBase
     {
         private readonly IVentaService _ventaService;
@@ -19,23 +18,18 @@ namespace CineHollywoodTPI.API.Controllers
             _ventaService = ventaService;
         }
 
-        // Quién hace el pedido (sale del token JWT)
         private UsuarioActual Usuario => UsuarioActual.Desde(User);
 
-        // GET: api/venta  -> admin: todas / cliente: solo las suyas
         [HttpGet]
         public async Task<IActionResult> GetAll() => Ok(await _ventaService.GetVentasAsync(Usuario));
 
-        // GET: api/venta/totales
         [Authorize(Roles = "Administrador")]
         [HttpGet("totales")]
         public async Task<IActionResult> GetTotales() => Ok(await _ventaService.GetTotalesAsync());
 
-        // GET: api/venta/5  -> maestro + detalle
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetById(int id) => Ok(await _ventaService.GetDetalleAsync(id, Usuario));
 
-        // POST: api/venta  -> transacción maestro-detalle, 201 Created
         [HttpPost]
         public async Task<IActionResult> RegistrarVenta([FromBody] VentaCompletaDTO dto)
         {

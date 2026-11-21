@@ -1,6 +1,5 @@
 namespace CineHollywoodTPI.Data.DTOs
 {
-    // Sala con su tipo y la distribución de butacas (para el ABM de salas)
     public class SalaDetalleDTO
     {
         public int IdSala { get; set; }
@@ -13,7 +12,7 @@ namespace CineHollywoodTPI.Data.DTOs
         public int CantidadFilas { get; set; }
         public int ButacasPorFila { get; set; }
         public int CantidadFunciones { get; set; }
-        public bool TieneEntradasVendidas { get; set; } // si es true no se puede cambiar la distribución
+        public bool TieneEntradasVendidas { get; set; }
     }
 
     public class SalaGuardarDTO
@@ -21,7 +20,7 @@ namespace CineHollywoodTPI.Data.DTOs
         public string Nombre { get; set; } = null!;
         public int IdTipoSala { get; set; }
         public int? IdComplejo { get; set; }
-        public int Filas { get; set; }           // A, B, C... (máx. 26)
-        public int ButacasPorFila { get; set; }  // 1..40
+        public int Filas { get; set; }
+        public int ButacasPorFila { get; set; }
     }
 }

@@ -6,12 +6,6 @@ using Microsoft.Extensions.Options;
 
 namespace CineHollywoodTPI.API.Services
 {
-    // Reglas de funciones:
-    //  - Película, sala, formato, fecha y hora obligatorios; la película tiene que estar activa.
-    //  - No se puede programar en una fecha pasada.
-    //  - No se puede superponer con otra función de la misma sala (según la duración de la película).
-    //  - Si ya tiene entradas vendidas: no se puede cambiar película, sala, fecha ni hora, ni cancelarla.
-    //  - Una función "empezada" (fecha + hora ya pasaron) no aparece como próxima y no se vende.
     public class FuncionService : IFuncionService
     {
         private readonly IFuncionRepository _funcionRepository;
@@ -34,8 +28,6 @@ namespace CineHollywoodTPI.API.Services
             _reglas = reglas.Value;
         }
 
-        // ===================== Reglas reutilizables =====================
-
         public bool YaEmpezo(Funcion f)
         {
             if (f.Fecha == null) return false;
@@ -47,14 +39,11 @@ namespace CineHollywoodTPI.API.Services
             f.IdPeliculaNavigation?.IdClasificacionNavigation?.Descripcion?
                 .Contains(_reglas.TextoClasificacionMayores) == true;
 
-        // ===================== Consultas =====================
-
         public async Task<IEnumerable<FuncionDTO>> GetActivasAsync(int? idPelicula, bool soloProximas)
         {
             DateOnly? desde = soloProximas ? DateOnly.FromDateTime(DateTime.Today) : null;
             var funciones = (await _funcionRepository.GetAllActiveAsync(idPelicula, desde)).ToList();
 
-            // "Próximas" = que todavía no empezaron (no solo por fecha, también por hora)
             if (soloProximas)
                 funciones = funciones.Where(f => !YaEmpezo(f)).ToList();
 
@@ -102,6 +91,7 @@ namespace CineHollywoodTPI.API.Services
                 PorcentajeDescuento = f.IdPromocionNavigation?.PorcentajeDescuento,
                 TieneEntradasVendidas = tieneVentas,
                 PrecioEntrada = _precioService.PrecioEntrada(f, 1),
+                PrecioSinDescuento = _precioService.PrecioBase(f),
                 Precios = tiposEspectador.Select(t =>
                 {
                     var detalle = _precioService.DetallePrecio(f, t);
@@ -110,8 +100,6 @@ namespace CineHollywoodTPI.API.Services
                 }).ToList()
             };
         }
-
-        // ===================== ABM =====================
 
         private async Task ValidarAsync(Funcion f)
         {
@@ -174,7 +162,6 @@ namespace CineHollywoodTPI.API.Services
             var funcion = await _funcionRepository.GetByIdAsync(id)
                 ?? throw new NoEncontradoException($"No existe la función con ID {id}.");
 
-            // Regla: con entradas vendidas no se puede mover la función (la gente ya compró para ese día/sala)
             if (await _funcionRepository.TieneEntradasVendidasAsync(id))
             {
                 var cambiaAlgoCritico =

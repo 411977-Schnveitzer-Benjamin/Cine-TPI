@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;700;800&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -19,7 +20,6 @@
         </div>
 
         <div id="flujoCompra" hidden>
-            <!-- Paso 1: Función -->
             <section class="card mb-4" id="step1">
                 <div class="card-body p-4">
                     <h2 class="h4 text-primary d-flex align-items-center gap-2 mb-4">
@@ -29,7 +29,6 @@
                 </div>
             </section>
 
-            <!-- Paso 2: Butacas + tipo de espectador -->
             <section class="card mb-4" id="step2" hidden>
                 <div class="card-body p-4">
                     <h2 class="h4 text-primary d-flex align-items-center gap-2 mb-2">
@@ -42,7 +41,6 @@
                 </div>
             </section>
 
-            <!-- Paso 3: Pago y confirmación -->
             <section class="card mb-4" id="step3" hidden>
                 <div class="card-body p-4">
                     <h2 class="h4 text-primary d-flex align-items-center gap-2 mb-4">
@@ -67,7 +65,6 @@
             </section>
         </div>
 
-        <!-- Resultado -->
         <section class="card text-center" id="comprobante" hidden></section>
     </main>
 
@@ -77,6 +74,8 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.14.5/sweetalert2.all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/l10n/es.min.js"></script>
     <script src="js/api.js"></script>
     <script src="js/main.js"></script>
     <script src="js/butacas.js"></script>
