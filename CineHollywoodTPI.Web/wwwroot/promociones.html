@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Promociones - Cines Hollywood</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header id="navbarCine"></header>
+
+    <main class="container page">
+        <h1 class="display-5 fw-bold">Promociones</h1>
+        <p class="lead text-body-secondary mb-5">Descuentos aplicados automáticamente al precio de la entrada en las funciones adheridas.</p>
+
+        <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4" id="promociones-container"></div>
+
+        <div class="alert alert-info mt-5" role="note">
+            <strong>Jubilados y menores:</strong> en las funciones <em>sin</em> promoción tienen <strong>15% de descuento</strong>.
+            Si la función tiene una promoción, se aplica solo la promoción.
+        </div>
+    </main>
+
+    <footer class="border-top py-4 text-body-secondary small">
+        <div class="container">© 2026 Cines Hollywood - TPI</div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.14.5/sweetalert2.all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/l10n/es.min.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const cont = document.getElementById('promociones-container');
+            cont.innerHTML = htmlCargando();
+            try {
+                const [promos, funciones] = await Promise.all([
+                    api('/catalogo/promociones'),
+                    api('/funcion?soloProximas=true')
+                ]);
+
+                if (!promos.length) {
+                    cont.innerHTML = htmlVacio('No hay promociones activas en este momento.');
+                    return;
+                }
+
+                cont.innerHTML = promos.map(p => {
+                    const adheridas = funciones.filter(f => f.idPromocion === p.idPromocion);
+                    const lista = adheridas.length
+                        ? `<div class="d-flex flex-wrap gap-1">${adheridas.slice(0, 8).map(f =>
+                              `<a class="btn btn-sm btn-outline-secondary rounded-pill" href="reserva.html?id=${f.idPelicula}&funcion=${f.idFuncion}">${esc(f.peliculaTitulo)} · ${fmtFechaCorta(f.fecha)} ${fmtHora(f.horaInicio)}</a>`).join('')}</div>`
+                        : '<p class="text-body-secondary mb-0">Por ahora no hay funciones próximas con esta promo.</p>';
+
+                    return `
+                        <div class="col">
+                            <article class="card h-100">
+                                <div class="card-body d-flex flex-column gap-3">
+                                    <span class="display-5 fw-bold text-primary">-${Number(p.porcentajeDescuento ?? 0)}%</span>
+                                    <h2 class="card-title h4 mb-0">${esc(p.descripcion)}</h2>
+                                    <p class="text-body-secondary small mb-0">Funciones adheridas:</p>
+                                    ${lista}
+                                </div>
+                            </article>
+                        </div>`;
+                }).join('');
+            } catch (err) {
+                cont.innerHTML = htmlVacio(err.message);
+            }
+        });
+    </script>
+</body>
+</html>

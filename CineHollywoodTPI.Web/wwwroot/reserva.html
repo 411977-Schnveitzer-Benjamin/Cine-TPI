@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comprar entradas - Cines Hollywood</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header id="navbarCine"></header>
+
+    <main class="container page" style="max-width: 900px">
+        <div class="d-flex align-items-center gap-4 mb-4" id="peliculaInfo">
+            <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando...</span></div>
+        </div>
+
+        <div id="flujoCompra" hidden>
+            <section class="card mb-4" id="step1">
+                <div class="card-body p-4">
+                    <h2 class="h4 text-primary d-flex align-items-center gap-2 mb-4">
+                        <span class="badge rounded-circle text-bg-primary">1</span> Elegí la función
+                    </h2>
+                    <div id="funcionesLista"></div>
+                </div>
+            </section>
+
+            <section class="card mb-4" id="step2" hidden>
+                <div class="card-body p-4">
+                    <h2 class="h4 text-primary d-flex align-items-center gap-2 mb-2">
+                        <span class="badge rounded-circle text-bg-primary">2</span> Elegí tus butacas
+                    </h2>
+                    <p class="text-body-secondary" id="funcionElegidaTexto"></p>
+                    <div id="mapaButacas"></div>
+                    <h3 class="h5 mt-4 mb-3">Tus entradas</h3>
+                    <div id="entradasDetalle"></div>
+                </div>
+            </section>
+
+            <section class="card mb-4" id="step3" hidden>
+                <div class="card-body p-4">
+                    <h2 class="h4 text-primary d-flex align-items-center gap-2 mb-4">
+                        <span class="badge rounded-circle text-bg-primary">3</span> Pago
+                    </h2>
+
+                    <div class="alert alert-info" id="avisoAdmin" hidden>
+                        Estás logueado como <strong>administrador</strong>. Las ventas de boletería se registran desde
+                        <a href="admin.html#ventas" class="alert-link">Panel &gt; Ventas</a>, eligiendo el cliente.
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="formaPago">Forma de pago</label>
+                        <select class="form-select" id="formaPago"></select>
+                    </div>
+
+                    <ul class="list-group mb-3" id="resumen"></ul>
+
+                    <button class="btn btn-primary btn-lg w-100" id="btnConfirmar">Confirmar compra</button>
+                    <div class="form-text text-center mt-2" id="hintLogin"></div>
+                </div>
+            </section>
+        </div>
+
+        <section class="card text-center" id="comprobante" hidden></section>
+    </main>
+
+    <footer class="border-top py-4 text-body-secondary small">
+        <div class="container">© 2026 Cines Hollywood - TPI</div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.14.5/sweetalert2.all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/l10n/es.min.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/butacas.js"></script>
+    <script src="js/reserva.js"></script>
+</body>
+</html>

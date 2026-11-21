@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cines Hollywood - La mejor experiencia</title>
+    <meta name="description" content="Cines Hollywood: cartelera, horarios y compra de entradas online.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header id="navbarCine" data-transparente></header>
+
+    <main>
+        <section class="hero">
+            <div class="container">
+                <span class="badge rounded-pill hero-badge px-3 py-2 mb-3">Estrenos 2026</span>
+                <h1 class="display-3 fw-bold mb-3">Viví la mejor<br>experiencia del cine</h1>
+                <p class="lead mb-4">Elegí tu película, tu función y tu butaca. Comprá tus entradas online en segundos.</p>
+                <div class="d-flex flex-wrap gap-3">
+                    <a href="cartelera.html" class="btn btn-primary btn-lg rounded-pill px-4">Ver cartelera</a>
+                    <a href="promociones.html" class="btn btn-outline-light btn-lg rounded-pill px-4">Ver promociones</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="py-5">
+            <div class="container">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="fw-bold m-0">En cartelera</h2>
+                    <div class="d-flex gap-2" id="carouselControles">
+                        <button class="btn btn-outline-secondary rounded-circle" id="prevSlide" aria-label="Anterior">&#8249;</button>
+                        <button class="btn btn-outline-secondary rounded-circle" id="nextSlide" aria-label="Siguiente">&#8250;</button>
+                    </div>
+                </div>
+                <div class="carousel-3d" id="carouselTrack"></div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="border-top py-4 text-body-secondary small">
+        <div class="container d-flex flex-wrap justify-content-between gap-2">
+            <span>© 2026 Cines Hollywood - TPI</span>
+            <span>Horarios y precios sujetos a cambios.</span>
+        </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.14.5/sweetalert2.all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/l10n/es.min.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/index.js"></script>
+</body>
+</html>

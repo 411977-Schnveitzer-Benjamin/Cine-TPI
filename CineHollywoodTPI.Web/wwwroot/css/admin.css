@@ -1,0 +1,66 @@
+.sidebar { --bs-offcanvas-width: 260px; }
+.sidebar.offcanvas-lg { background-color: var(--cine-surface) !important; }
+
+@media (min-width: 992px) {
+    .sidebar {
+        width: 250px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        border-right: 1px solid var(--bs-border-color);
+    }
+    .sidebar .offcanvas-body { height: 100%; }
+}
+
+.sidebar .nav-link {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    color: var(--bs-secondary-color);
+    font-weight: 500;
+}
+.sidebar .nav-link:hover { background: var(--bs-tertiary-bg); color: var(--bs-body-color); }
+.sidebar .nav-link.active { font-weight: 600; }
+
+.sidebar svg, .btn svg { width: 18px; height: 18px; vertical-align: -3px; }
+.btn-sm svg { width: 16px; height: 16px; }
+
+.profile-avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: grid; place-items: center;
+    background: var(--cine-primary);
+    color: var(--cine-primary-ink);
+    font-weight: 800;
+    flex-shrink: 0;
+}
+
+.top-header {
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+    background: var(--bs-body-bg);
+    border-bottom: 1px solid var(--bs-border-color);
+}
+
+.metric-icon {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    display: grid; place-items: center;
+    flex-shrink: 0;
+}
+.metric-icon svg { width: 22px; height: 22px; }
+.metric-value { font: 800 1.6rem var(--font-title); margin: 0; font-variant-numeric: tabular-nums; }
+
+.chart-box { position: relative; height: 280px; }
+
+.table-poster { width: 38px; border-radius: 4px; overflow: hidden; }
+.table-poster .poster-generado { padding: .2rem; }
+.table-poster .poster-generado span { font-size: .4rem; }
+.fila-pasada td { opacity: .55; }
+.table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.btn-icono { width: 34px; height: 34px; padding: 0; display: inline-grid; place-items: center; }
+
+.poster-preview { width: 90px; border-radius: var(--bs-border-radius); overflow: hidden; }
